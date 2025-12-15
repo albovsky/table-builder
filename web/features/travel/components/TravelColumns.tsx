@@ -26,7 +26,7 @@ export function useTravelColumns(dateFormat: DateFormat): ColumnDef<TravelEntry>
     },
     {
       id: "duration",
-      header: "Amount of Days",
+      header: "Days",
       size: 120,
       cell: ({ row }) => {
           const start = row.original.startDate;
@@ -44,7 +44,13 @@ export function useTravelColumns(dateFormat: DateFormat): ColumnDef<TravelEntry>
     {
       accessorKey: "destination",
       header: "City and Country",
-      cell: (props) => <EditableCell {...props} className="whitespace-normal break-words" />,
+      cell: (props) => (
+        <EditableCell
+          {...props}
+          multiline
+          className="whitespace-pre-wrap break-words text-wrap leading-5"
+        />
+      ),
       size: 260,
     },
     {

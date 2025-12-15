@@ -4,7 +4,7 @@ import { DataTable } from "@/components/shared/DataTable";
 import { useTravelData, bulkDeleteTravelEntries, bulkDuplicateTravelEntries, bulkUpdateTravelPurpose, bulkUpdateTravelLocation } from "../hooks/useTravelData";
 import { useTravelColumns } from "./TravelColumns";
 import { TravelEntry } from "@/db/db";
-import { FileDown, FileText, Copy, Check, ChevronDown, Bug } from "lucide-react";
+import { FileDown, FileText, Copy, Check, ChevronDown, Bug, X } from "lucide-react";
 import { useMemo, useState } from "react";
 import { exportTravelCSV, downloadCSV, copyTravelToClipboard } from "@/services/export/csvExporter";
 import {
@@ -87,14 +87,27 @@ export function TravelTable() {
     const actionCol = {
       id: "actions",
       header: "",
-      size: 140,
+      size: 80,
+      meta: { className: "px-1" },
       cell: ({ row }: { row: { original: TravelEntry } }) => (
-        <div className="flex gap-2 justify-end w-full">
-          <Button size="sm" variant="outline" onClick={() => duplicateEntry(row.original.id)} title="Duplicate">
-            ⧉
+        <div className="w-full flex items-center justify-end gap-2 pr-1">
+          <Button
+            size="icon"
+            variant="outline"
+            className="size-10 min-w-[40px] min-h-[40px] p-0 aspect-square"
+            onClick={() => duplicateEntry(row.original.id)}
+            title="Duplicate"
+          >
+            <Copy className="h-4 w-4" />
           </Button>
-          <Button size="sm" variant="outline" onClick={() => deleteEntry(row.original.id)} title="Delete">
-            ✕
+          <Button
+            size="icon"
+            variant="outline"
+            className="size-10 min-w-[40px] min-h-[40px] p-0 aspect-square"
+            onClick={() => deleteEntry(row.original.id)}
+            title="Delete"
+          >
+            <X className="h-4 w-4" />
           </Button>
         </div>
       ),

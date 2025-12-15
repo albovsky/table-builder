@@ -47,6 +47,7 @@ export function DataTable<TData, TValue>({
     count: rows.length,
     estimateSize: () => 56,
     overscan: 8,
+    measureElement: (el) => el?.getBoundingClientRect().height ?? 56,
   });
   const virtualRows = rowVirtualizer.getVirtualItems();
   const paddingTop = virtualRows.length > 0 ? virtualRows[0].start : 0;
@@ -89,6 +90,7 @@ export function DataTable<TData, TValue>({
                 key={row.id}
                 data-index={virtualRow.index}
                 data-state={row.getIsSelected() ? "selected" : undefined}
+                ref={rowVirtualizer.measureElement}
                 className={cn(
                   "ui-table-row border-b border-border/40 transition-colors hover:bg-muted/30 data-[state=selected]:bg-muted",
                   highlightedRows[rowId] ? "row-highlight" : "",
@@ -98,7 +100,6 @@ export function DataTable<TData, TValue>({
                   isGapBorder ? "relative overflow-hidden border-b border-transparent" : ""
                 )}
                 style={{
-                  height: `${virtualRow.size}px`,
                   ...(isGapBorder
                     ? {
                         backgroundImage:
@@ -112,11 +113,14 @@ export function DataTable<TData, TValue>({
                 }}
               >
                 {row.getVisibleCells().map((cell) => (
-                  <td
-                    key={cell.id}
-                    className="ui-table-cell h-full align-middle"
-                    style={cell.column.getSize() ? { width: cell.column.getSize() } : undefined}
-                  >
+                <td
+                  key={cell.id}
+                  className={cn(
+                    "ui-table-cell h-full align-middle",
+                    (cell.column.columnDef.meta as { className?: string } | undefined)?.className
+                  )}
+                  style={cell.column.getSize() ? { width: cell.column.getSize() } : undefined}
+                >
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </td>
                 ))}
