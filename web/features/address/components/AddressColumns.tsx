@@ -5,6 +5,8 @@ import { AddressEntry } from "@/db/db";
 import { EditableCell } from "@/components/shared/EditableCell";
 import { useAddressData } from "../hooks/useAddressData";
 import { Checkbox } from "@/components/ui/checkbox"; // Assuming shadcn checkbox exists or I'll use native input for now to avoid dependency check delay
+import { DateCell } from "@/components/shared/DateCell";
+import { type DateFormat } from "@/lib/dateFormat";
 
 // Helper to cast EditableCell as a compatible cell renderer type
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -16,6 +18,7 @@ const EndDateCell = (props: any) => {
     const { getValue, row, column, table } = props;
     const value = getValue();
     const isCurrent = value === null;
+    const dateFormat = props.dateFormat as DateFormat;
 
     const handleCheck = (checked: boolean) => {
          if (checked) {
@@ -40,7 +43,7 @@ const EndDateCell = (props: any) => {
 
     return (
         <div className="flex items-center gap-2 w-full h-full">
-            <EditableCell {...props} placeholder="YYYY-MM-DD" />
+            <DateCell {...props} format={dateFormat} placeholder="YYYY-MM-DD" />
              <Checkbox 
                     checked={false} 
                     onCheckedChange={(checked) => handleCheck(checked as boolean)}
@@ -51,35 +54,37 @@ const EndDateCell = (props: any) => {
 }
 
 
-export const addressColumns: ColumnDef<AddressEntry>[] = [
-  {
-    accessorKey: "startDate",
-    header: "Start Date",
-    cell: (props) => <EditableCell {...props} className="whitespace-nowrap min-w-[120px]" />,
-    size: 180,
-  },
-  {
-    accessorKey: "endDate",
-    header: "End Date",
-    cell: EndDateCell,
-    size: 180,
-  },
-  {
-    accessorKey: "country",
-    header: "Country",
-    cell: (props) => <EditableCell {...props} className="whitespace-normal break-words" />,
-    size: 220,
-  },
-  {
-    accessorKey: "city",
-    header: "City",
-    cell: (props) => <EditableCell {...props} className="whitespace-normal break-words" />,
-    size: 220,
-  },
-  {
-    accessorKey: "line1",
-    header: "Address Line 1",
-    cell: (props) => <EditableCell {...props} className="whitespace-normal break-words" />,
-    size: 300,
-  },
-];
+export function useAddressColumns(dateFormat: DateFormat): ColumnDef<AddressEntry>[] {
+  return [
+    {
+      accessorKey: "startDate",
+      header: "Start Date",
+      cell: (props) => <DateCell {...props} format={dateFormat} className="whitespace-nowrap min-w-[120px]" />,
+      size: 180,
+    },
+    {
+      accessorKey: "endDate",
+      header: "End Date",
+      cell: (props) => <EndDateCell {...props} dateFormat={dateFormat} />,
+      size: 180,
+    },
+    {
+      accessorKey: "country",
+      header: "Country",
+      cell: (props) => <EditableCell {...props} className="whitespace-normal break-words" />,
+      size: 220,
+    },
+    {
+      accessorKey: "city",
+      header: "City",
+      cell: (props) => <EditableCell {...props} className="whitespace-normal break-words" />,
+      size: 220,
+    },
+    {
+      accessorKey: "line1",
+      header: "Address Line 1",
+      cell: (props) => <EditableCell {...props} className="whitespace-normal break-words" />,
+      size: 300,
+    },
+  ];
+}

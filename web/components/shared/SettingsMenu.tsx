@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Settings, Heart, Bug, Keyboard, HardDrive } from "lucide-react";
+import { Settings, Heart, Bug, Keyboard, HardDrive, CalendarRange } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import {
@@ -13,6 +13,7 @@ import {
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
   DropdownMenuPortal,
+  DropdownMenuItem,
 } from "@/components/ui/dropdown-menu";
 import { useStore } from "@/store/useStore";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -25,7 +26,7 @@ const subTriggerClass =
 
 export function SettingsMenu() {
   const { resolvedTheme, setTheme } = useTheme();
-  const { layoutMode, setLayoutMode } = useStore();
+  const { layoutMode, setLayoutMode, dateFormat, setDateFormat } = useStore();
   const [lastBackup, setLastBackup] = useState<number | null>(null);
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [isRestoring, setIsRestoring] = useState(false);
@@ -147,6 +148,43 @@ export function SettingsMenu() {
                 </TabsTrigger>
               </TabsList>
             </Tabs>
+          </div>
+
+          <div className="flex items-center justify-between gap-3">
+            <span className="ui-text-label text-muted-foreground whitespace-nowrap">Date format</span>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="outline" className="gap-2 w-[260px] justify-between">
+                  <div className="flex items-center gap-2">
+                    <CalendarRange className="h-4 w-4" />
+                    <span className="font-medium">
+                      {(() => {
+                        switch (dateFormat) {
+                          case "mdy":
+                            return "MM/DD/YYYY";
+                          case "dmy":
+                            return "DD/MM/YYYY";
+                          case "mdy-mon":
+                            return "Mon DD, YYYY";
+                          case "dmy-mon":
+                            return "DD Mon YYYY";
+                          case "iso":
+                          default:
+                            return "YYYY-MM-DD";
+                        }
+                      })()}
+                    </span>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-[260px]">
+                <DropdownMenuItem onClick={() => setDateFormat("iso")}>YYYY-MM-DD</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setDateFormat("mdy")}>MM/DD/YYYY</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setDateFormat("dmy")}>DD/MM/YYYY</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setDateFormat("mdy-mon")}>Mon DD, YYYY</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setDateFormat("dmy-mon")}>DD Mon YYYY</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
 

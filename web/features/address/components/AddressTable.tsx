@@ -3,7 +3,7 @@
 import { DataTable } from "@/components/shared/DataTable";
 import { useMemo, useState } from "react";
 import { useAddressData, bulkDeleteAddressEntries, bulkDuplicateAddressEntries, bulkUpdateAddressLocation } from "../hooks/useAddressData";
-import { addressColumns } from "./AddressColumns";
+import { useAddressColumns } from "./AddressColumns";
 import { FileDown, FileText, Copy, Check, ChevronDown } from "lucide-react";
 import { exportAddressCSV, downloadCSV, copyAddressToClipboard } from "@/services/export/csvExporter";
 import {
@@ -17,6 +17,7 @@ import { ExportDialog } from "@/components/shared/ExportDialog";
 import { AddressEntry } from "@/db/db";
 import { Checkbox } from "@/components/ui/checkbox";
 import { type ColumnDef, type RowSelectionState } from "@tanstack/react-table";
+import { useStore } from "@/store/useStore";
 
 export function AddressTable() {
   const { data, updateEntry, addEntry, deleteEntry, duplicateEntry } = useAddressData();
@@ -25,6 +26,7 @@ export function AddressTable() {
   const [exportAction, setExportAction] = useState<(() => void) | null>(null);
   const [exportType, setExportType] = useState<"PDF" | "CSV" | "Clipboard">("PDF");
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const dateFormat = useStore((s) => s.dateFormat);
 
   const handleRowUpdate = (rowIndex: number, columnId: string, value: unknown) => {
     const row = data[rowIndex];
@@ -102,8 +104,8 @@ export function AddressTable() {
         </div>
       ),
     } as const;
-    return [selectionCol, ...addressColumns, actionCol];
-  }, [deleteEntry, duplicateEntry]);
+    return [selectionCol, ...useAddressColumns(dateFormat), actionCol];
+  }, [deleteEntry, duplicateEntry, dateFormat]);
 
   const selectedIds = useMemo(
     () => Object.entries(rowSelection).filter(([, v]) => v).map(([id]) => id),

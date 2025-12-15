@@ -2,7 +2,7 @@
 
 import { DataTable } from "@/components/shared/DataTable";
 import { useTravelData, bulkDeleteTravelEntries, bulkDuplicateTravelEntries, bulkUpdateTravelPurpose, bulkUpdateTravelLocation } from "../hooks/useTravelData";
-import { travelColumns } from "./TravelColumns";
+import { useTravelColumns } from "./TravelColumns";
 import { TravelEntry } from "@/db/db";
 import { FileDown, FileText, Copy, Check, ChevronDown, Bug } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -18,6 +18,7 @@ import { ExportDialog } from "@/components/shared/ExportDialog";
 import { addRandomTravelEntries } from "../hooks/useTravelData";
 import { Checkbox } from "@/components/ui/checkbox";
 import { type ColumnDef, type RowSelectionState } from "@tanstack/react-table";
+import { useStore } from "@/store/useStore";
 
 export function TravelTable() {
   const { data, updateEntry, addEntry, deleteEntry, duplicateEntry } = useTravelData();
@@ -26,6 +27,7 @@ export function TravelTable() {
   const [exportAction, setExportAction] = useState<(() => void) | null>(null);
   const [exportType, setExportType] = useState<"PDF" | "CSV" | "Clipboard">("PDF");
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
+  const dateFormat = useStore((s) => s.dateFormat);
 
   const handleRowUpdate = (rowIndex: number, columnId: string, value: unknown) => {
     const row = data[rowIndex];
@@ -102,8 +104,8 @@ export function TravelTable() {
         </div>
       ),
     } as const;
-    return [selectionCol, ...travelColumns, actionCol];
-  }, [deleteEntry, duplicateEntry]);
+    return [selectionCol, ...useTravelColumns(dateFormat), actionCol];
+  }, [deleteEntry, duplicateEntry, dateFormat]);
 
   const selectedIds = useMemo(
     () => Object.entries(rowSelection).filter(([, v]) => v).map(([id]) => id),
