@@ -1,7 +1,7 @@
 "use client";
 
 import { DataTable } from "@/components/shared/DataTable";
-import { useTravelData } from "../hooks/useTravelData";
+import { useTravelData, bulkDeleteTravelEntries, bulkDuplicateTravelEntries, bulkUpdateTravelPurpose, bulkUpdateTravelLocation } from "../hooks/useTravelData";
 import { travelColumns } from "./TravelColumns";
 import { TravelEntry } from "@/db/db";
 import { FileDown, FileText, Copy, Check, ChevronDown, Bug } from "lucide-react";
@@ -16,6 +16,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { ExportDialog } from "@/components/shared/ExportDialog";
 import { addRandomTravelEntries } from "../hooks/useTravelData";
+import { Checkbox } from "@/components/ui/checkbox";
+import { type ColumnDef, type RowSelectionState } from "@tanstack/react-table";
 
 export function TravelTable() {
   const { data, updateEntry, addEntry, deleteEntry, duplicateEntry } = useTravelData();
@@ -23,6 +25,7 @@ export function TravelTable() {
   const [exportDialogOpen, setExportDialogOpen] = useState(false);
   const [exportAction, setExportAction] = useState<(() => void) | null>(null);
   const [exportType, setExportType] = useState<"PDF" | "CSV" | "Clipboard">("PDF");
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   const handleRowUpdate = (rowIndex: number, columnId: string, value: unknown) => {
     const row = data[rowIndex];
@@ -62,7 +65,28 @@ export function TravelTable() {
     [data]
   );
 
-  const columns = useMemo(() => {
+  const columns = useMemo<ColumnDef<TravelEntry>[]>(() => {
+    const selectionCol: ColumnDef<TravelEntry> = {
+      id: "select",
+      header: ({ table }) => (
+        <Checkbox
+          aria-label="Select all"
+          checked={table.getIsAllRowsSelected() || (table.getIsSomeRowsSelected() && "indeterminate")}
+          onCheckedChange={(value) => table.toggleAllRowsSelected(!!value)}
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          aria-label="Select row"
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+        />
+      ),
+      size: 40,
+      enableSorting: false,
+      enableHiding: false,
+    };
+
     const actionCol = {
       id: "actions",
       header: "",
@@ -78,8 +102,45 @@ export function TravelTable() {
         </div>
       ),
     } as const;
-    return [...travelColumns, actionCol];
+    return [selectionCol, ...travelColumns, actionCol];
   }, [deleteEntry, duplicateEntry]);
+
+  const selectedIds = useMemo(
+    () => Object.entries(rowSelection).filter(([, v]) => v).map(([id]) => id),
+    [rowSelection]
+  );
+
+  const handleBulkDelete = async () => {
+    if (!selectedIds.length) return;
+    const confirmed = window.confirm(`Delete ${selectedIds.length} selected entr${selectedIds.length === 1 ? "y" : "ies"}?`);
+    if (!confirmed) return;
+    await bulkDeleteTravelEntries(selectedIds);
+    setRowSelection({});
+  };
+
+  const handleBulkDuplicate = async () => {
+    if (!selectedIds.length) return;
+    await bulkDuplicateTravelEntries(selectedIds);
+    setRowSelection({});
+  };
+
+  const handleBulkPurpose = async () => {
+    if (!selectedIds.length) return;
+    const purpose = window.prompt("Set purpose for selected entries:");
+    if (!purpose) return;
+    await bulkUpdateTravelPurpose(selectedIds, purpose);
+    setRowSelection({});
+  };
+
+  const handleBulkLocation = async () => {
+    if (!selectedIds.length) return;
+    const city = window.prompt("City (leave blank to only set country):", "");
+    if (city === null) return;
+    const country = window.prompt("Country:", "");
+    if (!country) return;
+    await bulkUpdateTravelLocation(selectedIds, city ?? "", country);
+    setRowSelection({});
+  };
 
   return (
     <div className="flex flex-col h-full gap-4">
@@ -98,6 +159,22 @@ export function TravelTable() {
       <div className="flex items-center justify-between">
         <h2 className="text-lg font-semibold tracking-tight">Travel History</h2>
         <div className="flex items-center gap-2">
+            {selectedIds.length > 0 && (
+              <div className="flex items-center gap-2 mr-2">
+                <Button variant="outline" onClick={handleBulkDelete}>
+                  Delete
+                </Button>
+                <Button variant="outline" onClick={handleBulkDuplicate}>
+                  Duplicate
+                </Button>
+                <Button variant="outline" onClick={handleBulkPurpose}>
+                  Set Purpose
+                </Button>
+                <Button variant="outline" onClick={handleBulkLocation}>
+                  Set City/Country
+                </Button>
+              </div>
+            )}
             {process.env.NODE_ENV !== "production" && (
               <Button variant="secondary" onClick={() => addRandomTravelEntries(1)} className="gap-2">
                 <Bug className="h-4 w-4" />
@@ -137,6 +214,14 @@ export function TravelTable() {
             columns={columns}
             data={sortedData}
             onRowUpdate={handleRowUpdate}
+            rowSelection={rowSelection}
+            onRowSelectionChange={(updater) => {
+              if (typeof updater === "function") {
+                setRowSelection((prev) => updater(prev));
+              } else {
+                setRowSelection(updater);
+              }
+            }}
         />
       </div>
 

@@ -81,3 +81,40 @@ export function useAddressData() {
     duplicateLastEntry: duplicateLastAddressEntry,
   };
 }
+
+export async function bulkDeleteAddressEntries(ids: string[]) {
+  if (!ids.length) return;
+  await pushSnapshotFromDb();
+  await db.address.bulkDelete(ids);
+}
+
+export async function bulkDuplicateAddressEntries(ids: string[]) {
+  if (!ids.length) return;
+  const entries = await db.address.bulkGet(ids);
+  const nowIso = new Date().toISOString();
+  const copies: AddressEntry[] = [];
+  entries.forEach((entry) => {
+    if (!entry) return;
+    copies.push({
+      ...entry,
+      id: nanoid(),
+      createdAt: nowIso,
+      updatedAt: nowIso,
+    });
+  });
+  if (!copies.length) return;
+  await pushSnapshotFromDb();
+  await db.address.bulkAdd(copies);
+  useStore.getState().markHighlightedRows(copies.map((c) => c.id));
+}
+
+export async function bulkUpdateAddressLocation(ids: string[], city: string, country: string) {
+  if (!ids.length) return;
+  await pushSnapshotFromDb();
+  const nowIso = new Date().toISOString();
+  await db.address.where("id").anyOf(ids).modify({
+    city,
+    country,
+    updatedAt: nowIso,
+  });
+}

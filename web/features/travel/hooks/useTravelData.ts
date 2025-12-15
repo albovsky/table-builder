@@ -144,3 +144,49 @@ export function useTravelData() {
     duplicateLastEntry: duplicateLastTravelEntry,
   };
 }
+
+export async function bulkDeleteTravelEntries(ids: string[]) {
+  if (!ids.length) return;
+  await pushSnapshotFromDb();
+  await db.travel.bulkDelete(ids);
+}
+
+export async function bulkDuplicateTravelEntries(ids: string[]) {
+  if (!ids.length) return;
+  const entries = await db.travel.bulkGet(ids);
+  const nowIso = new Date().toISOString();
+  const copies: TravelEntry[] = [];
+  entries.forEach((entry) => {
+    if (!entry) return;
+    copies.push({
+      ...entry,
+      id: nanoid(),
+      createdAt: nowIso,
+      updatedAt: nowIso,
+    });
+  });
+  if (!copies.length) return;
+  await pushSnapshotFromDb();
+  await db.travel.bulkAdd(copies);
+  useStore.getState().markHighlightedRows(copies.map((c) => c.id));
+}
+
+export async function bulkUpdateTravelPurpose(ids: string[], purposeCode: string) {
+  if (!ids.length) return;
+  await pushSnapshotFromDb();
+  const nowIso = new Date().toISOString();
+  await db.travel.where("id").anyOf(ids).modify({ purposeCode, updatedAt: nowIso });
+}
+
+export async function bulkUpdateTravelLocation(ids: string[], city: string, country: string) {
+  if (!ids.length) return;
+  await pushSnapshotFromDb();
+  const nowIso = new Date().toISOString();
+  const destination = city ? `${city}, ${country}` : country;
+  await db.travel.where("id").anyOf(ids).modify({
+    destinationCity: city,
+    destinationCountry: country,
+    destination,
+    updatedAt: nowIso,
+  });
+}

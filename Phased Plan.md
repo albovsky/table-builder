@@ -33,11 +33,10 @@
 ---
 
 ### Phase 3 Checklist
-- [x] Undo/redo via snapshot stack.
-- [x] Keyboard shortcuts: undo/redo, add/delete/duplicate row, switch tabs, open validation panel.
-- [ ] Versioned local backups with pruning.
-- [ ] Optional encryption layer for backups.
-- [ ] Bulk purpose edit + multi-select model.
-- [ ] Estimated date flag handling (UI + validation + import/export).
-- [ ] Performance harness + benchmarks (2k rows smooth).
+- [x] Undo/redo via snapshot stack (completed).
+- [x] Keyboard shortcuts (undo/redo, add/delete/duplicate row, switch tabs, open validation panel).
+- [x] Backup/restore: versioned local backups with pruning; restore validation; UI for backup/restore (completed).
+- [ ] Bulk edits: multi-select; bulk delete/duplicate/set purpose/city; single-snapshot undo; confirmations.
+- [ ] Estimated date flag handling: model + UI indicator; validation; import/export preservation.
+- [ ] Performance harness + benchmarks (seed 2k rows, measure add/delete/duplicate/render).
 - [ ] Refine warning copy and date-format display alignment.

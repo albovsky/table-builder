@@ -12,14 +12,14 @@ export const travelColumns: ColumnDef<TravelEntry>[] = [
   {
     accessorKey: "startDate",
     header: "Start Date",
-    cell: cellRenderer,
-    size: 170,
+    cell: (props) => <EditableCell {...props} className="whitespace-nowrap min-w-[120px]" />,
+    size: 180,
   },
   {
     accessorKey: "endDate",
     header: "End Date",
-    cell: cellRenderer,
-    size: 170,
+    cell: (props) => <EditableCell {...props} className="whitespace-nowrap min-w-[120px]" />,
+    size: 180,
   },
   {
     id: "duration",
@@ -37,13 +37,13 @@ export const travelColumns: ColumnDef<TravelEntry>[] = [
   {
     accessorKey: "destination",
     header: "City and Country",
-    cell: cellRenderer,
-    size: 300,
+    cell: (props) => <EditableCell {...props} className="whitespace-normal break-words" />,
+    size: 260,
   },
   {
     accessorKey: "purposeCode",
     header: "Purpose",
-    cell: cellRenderer,
-    size: 150,
+    cell: (props) => <EditableCell {...props} className="whitespace-normal break-words" />,
+    size: 180,
   },
 ];

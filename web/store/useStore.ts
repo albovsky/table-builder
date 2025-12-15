@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { ValidationError } from '@/services/validator/validator';
 import { TravelEntry, AddressEntry } from '@/db/db';
+import { type RowSelectionState } from '@tanstack/react-table';
 
 export interface HistorySnapshot {
   travel: TravelEntry[];
@@ -19,6 +20,10 @@ interface AppState {
   setLayoutMode: (mode: 'centered' | 'wide') => void;
   highlightedRows: Record<string, boolean>;
   markHighlightedRows: (ids: string[]) => void;
+  travelSelection: RowSelectionState;
+  addressSelection: RowSelectionState;
+  setTravelSelection: (sel: RowSelectionState) => void;
+  setAddressSelection: (sel: RowSelectionState) => void;
   undoStack: HistorySnapshot[];
   redoStack: HistorySnapshot[];
   pushSnapshot: (snapshot: HistorySnapshot) => void;
@@ -40,6 +45,10 @@ export const useStore = create<AppState>((set, get) => ({
   layoutMode: 'centered',
   setLayoutMode: (mode) => set({ layoutMode: mode }),
   highlightedRows: {},
+  travelSelection: {},
+  addressSelection: {},
+  setTravelSelection: (sel) => set({ travelSelection: sel }),
+  setAddressSelection: (sel) => set({ addressSelection: sel }),
   markHighlightedRows: (ids: string[]) => {
     if (!ids.length) return;
     set((state) => {

@@ -16,7 +16,7 @@ export async function captureSnapshot(): Promise<HistorySnapshot> {
   };
 }
 
-async function applySnapshot(snapshot: HistorySnapshot) {
+export async function applySnapshot(snapshot: HistorySnapshot) {
   await db.transaction("rw", db.travel, db.address, async () => {
     await db.travel.clear();
     await db.address.clear();

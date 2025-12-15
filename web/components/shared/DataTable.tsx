@@ -5,6 +5,7 @@ import {
   flexRender,
   getCoreRowModel,
   useReactTable,
+  type RowSelectionState,
 } from "@tanstack/react-table";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/store/useStore";
@@ -13,18 +14,26 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   onRowUpdate?: (rowIndex: number, columnId: string, value: unknown) => void;
+  rowSelection?: RowSelectionState;
+  onRowSelectionChange?: (updater: RowSelectionState) => void;
 }
 
 export function DataTable<TData, TValue>({
   columns,
   data,
   onRowUpdate,
+  rowSelection,
+  onRowSelectionChange,
 }: DataTableProps<TData, TValue>) {
   const { highlightedRows } = useStore();
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
+    state: { rowSelection },
+    enableRowSelection: true,
+    onRowSelectionChange: onRowSelectionChange as any,
+    getRowId: (row, idx) => (row as any).id ?? String(idx),
     meta: {
       updateData: (rowIndex: number, columnId: string, value: unknown) => {
         onRowUpdate?.(rowIndex, columnId, value);
@@ -61,6 +70,7 @@ export function DataTable<TData, TValue>({
           {rows.map((row) => (
             <tr
               key={row.id}
+              data-state={row.getIsSelected() ? "selected" : undefined}
               className={cn(
                 "ui-table-row border-b border-border/40 transition-colors hover:bg-muted/30 data-[state=selected]:bg-muted",
                 highlightedRows[(row.original as { id?: string }).id ?? ""] ? "row-highlight" : ""
