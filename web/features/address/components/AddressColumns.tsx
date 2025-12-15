@@ -7,6 +7,7 @@ import { useAddressData } from "../hooks/useAddressData";
 import { Checkbox } from "@/components/ui/checkbox"; // Assuming shadcn checkbox exists or I'll use native input for now to avoid dependency check delay
 import { DateCell } from "@/components/shared/DateCell";
 import { type DateFormat } from "@/lib/dateFormat";
+import { db } from "@/db/db";
 
 // Helper to cast EditableCell as a compatible cell renderer type
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -20,8 +21,23 @@ const EndDateCell = (props: any) => {
     const isCurrent = value === null;
     const dateFormat = props.dateFormat as DateFormat;
 
-    const handleCheck = (checked: boolean) => {
+    const handleCheck = async (checked: boolean) => {
          if (checked) {
+             // Only the most recent address can be "Present"
+             const latest = await db.address.orderBy("startDate").last();
+             if (!latest || latest.id !== row.original.id) {
+                alert("Only the most recent address can be marked as Present.");
+                return;
+             }
+             // Close any other present entries
+             const todayIso = new Date().toISOString().split("T")[0];
+             await db.transaction("rw", db.address, async () => {
+                await db.address
+                  .where("endDate")
+                  .equals(null)
+                  .and((entry) => entry.id !== latest.id)
+                  .modify({ endDate: todayIso, updatedAt: new Date().toISOString() });
+             });
              table.options.meta?.updateData(row.index, column.id, null);
          } else {
              // Default to today if unchecking

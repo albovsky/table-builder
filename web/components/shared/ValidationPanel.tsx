@@ -1,6 +1,6 @@
 "use client";
 
-import { AlertTriangle, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Blend, Ban, CheckCircle2, AlertTriangle, BetweenHorizontalStart } from "lucide-react";
 import { useStore } from "@/store/useStore";
 import {
   Sheet,
@@ -12,6 +12,8 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
+import { formatDateDisplay } from "@/lib/dateFormat";
+import { useMemo } from "react";
 
 import { db } from "@/db/db";
 import { nanoid } from "nanoid";
@@ -20,8 +22,15 @@ import { pushSnapshotFromDb } from "@/lib/historyManager";
 
 export function ValidationPanel() {
   const { validationErrors, isValidationOpen, setValidationOpen } = useStore();
+  const dateFormat = useStore((s) => s.dateFormat);
+  const setErrorHighlightIds = useStore((s) => s.setErrorHighlightIds);
+  const setGapBorderId = useStore((s) => s.setGapBorderId);
   const errorCount = validationErrors.length;
   const hasErrors = errorCount > 0;
+  const formatMessage = useMemo(() => {
+    const isoRegex = /\b\d{4}-\d{2}-\d{2}\b/g;
+    return (msg: string) => msg.replace(isoRegex, (m) => formatDateDisplay(m, dateFormat));
+  }, [dateFormat]);
 
   const handleFix = async (error: ValidationError) => {
     if (!error.fixAction) return;
@@ -79,7 +88,7 @@ export function ValidationPanel() {
             <Badge variant="outline">{errorCount}</Badge>
           </SheetTitle>
         </SheetHeader>
-        <ScrollArea className="flex-1 p-6">
+        <ScrollArea className="flex-1 p-6 h-[70vh]">
           {validationErrors.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full text-muted-foreground gap-2 p-8">
               <CheckCircle2 className="h-12 w-12 text-green-500/20" />
@@ -91,12 +100,28 @@ export function ValidationPanel() {
                 <div
                   key={`${error.id}-${idx}`}
                   className="flex gap-4 p-4 rounded-lg border bg-card text-card-foreground shadow-sm hover:bg-accent/50 transition-colors cursor-pointer group items-start"
+                  onMouseEnter={() => {
+                    if (error.type === "gap") {
+                      setGapBorderId(error.id);
+                      setErrorHighlightIds([]);
+                    } else {
+                      const ids = [error.id, error.relatedId].filter(Boolean) as string[];
+                      setErrorHighlightIds(ids);
+                      setGapBorderId(null);
+                    }
+                  }}
+                  onMouseLeave={() => {
+                    setErrorHighlightIds([]);
+                    setGapBorderId(null);
+                  }}
                 >
                   <div className="mt-1">
-                    {error.severity === "error" ? (
-                      <AlertCircle className="h-5 w-5 text-destructive" />
+                    {error.type === "overlap" ? (
+                      <Blend className="h-5 w-5 text-destructive" />
+                    ) : error.type === "gap" ? (
+                      <BetweenHorizontalStart className="h-5 w-5 text-destructive" />
                     ) : (
-                      <AlertTriangle className="h-5 w-5 text-yellow-500" />
+                      <Ban className="h-5 w-5 text-destructive" />
                     )}
                   </div>
                   <div className="space-y-1 flex-1">
@@ -105,9 +130,8 @@ export function ValidationPanel() {
                         <Badge variant="secondary" className="h-5 px-2 ui-text-label">{error.source}</Badge>
                     </div>
                     <p className="ui-text-body text-muted-foreground leading-relaxed">
-                      {error.message}
+                      {formatMessage(error.message)}
                     </p>
-                    <p className="ui-text-label text-muted-foreground/70 font-mono pt-1">ID: {error.id}</p>
                     {error.fixAction && (
                         <Button 
                             size="sm"

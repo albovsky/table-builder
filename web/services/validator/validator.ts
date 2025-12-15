@@ -16,6 +16,7 @@ export interface ValidationError {
   message: string;
   severity: "error" | "warning";
   fixAction?: FixAction;
+  relatedId?: string;
 }
 
 const describeDestination = (entry: TravelEntry) => {
@@ -88,8 +89,9 @@ export function validateTravel(entries: TravelEntry[]): ValidationError[] {
                 id: current.id,
                 source: 'travel',
                 type: "gap",
-                message: `Gap detected: ${startStr} to ${endStr}`,
+                message: `Gap between trips: ${startStr} → ${endStr}. Add a 'Home' entry or adjust dates.`,
                 severity: "warning", // Warning for travel, as "Home" is implicit
+                relatedId: next.id,
                 fixAction: {
                     type: "FILL_GAP",
                     label: "Add 'Home' Entry",
@@ -141,14 +143,14 @@ export function validateAddress(entries: AddressEntry[]): ValidationError[] {
                 id: current.id,
                 source: 'address',
                 type: "overlap",
-                message: "Overlaps with next address.",
+                message: "Overlaps with next address. Update dates so they don't conflict.",
                 severity: "error",
               });
               errors.push({
                 id: next.id,
                 source: 'address',
                 type: "overlap",
-                message: "Overlaps with previous address.",
+                message: "Overlaps with previous address. Update dates so they don't conflict.",
                 severity: "error",
               });
           }
@@ -170,7 +172,7 @@ export function validateAddress(entries: AddressEntry[]): ValidationError[] {
                   id: current.id,
                   source: 'address',
                   type: "gap",
-                  message: `Gap detected (${startStr} to ${endStr}).`,
+                  message: `Gap between addresses: ${startStr} → ${endStr}. Fill or adjust dates.`,
                   severity: "error",
                   fixAction: {
                     type: "FILL_GAP",

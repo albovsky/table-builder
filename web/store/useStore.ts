@@ -25,6 +25,10 @@ interface AppState {
   setPerfMode: (val: boolean) => void;
   highlightedRows: Record<string, boolean>;
   markHighlightedRows: (ids: string[]) => void;
+  errorHighlightIds: string[];
+  setErrorHighlightIds: (ids: string[]) => void;
+  gapBorderId: string | null;
+  setGapBorderId: (id: string | null) => void;
   travelSelection: RowSelectionState;
   addressSelection: RowSelectionState;
   setTravelSelection: (sel: RowSelectionState) => void;
@@ -56,6 +60,10 @@ export const useStore = create<AppState>()(
       perfMode: false,
       setPerfMode: (val) => set({ perfMode: val }),
       highlightedRows: {},
+      errorHighlightIds: [],
+      setErrorHighlightIds: (ids) => set({ errorHighlightIds: ids }),
+      gapBorderId: null,
+      setGapBorderId: (id) => set({ gapBorderId: id }),
       travelSelection: {},
       addressSelection: {},
       setTravelSelection: (sel) => set({ travelSelection: sel }),

@@ -26,7 +26,7 @@ export function DataTable<TData, TValue>({
   rowSelection,
   onRowSelectionChange,
 }: DataTableProps<TData, TValue>) {
-  const { highlightedRows } = useStore();
+  const { highlightedRows, errorHighlightIds, gapBorderId } = useStore();
   const table = useReactTable({
     data,
     columns,
@@ -56,7 +56,7 @@ export function DataTable<TData, TValue>({
       : 0;
 
   return (
-    <div className="w-full rounded-md border border-border bg-card">
+    <div className="w-full rounded-md border border-border bg-card overflow-hidden">
       <table className="w-full ui-text-body text-left border-collapse">
         <thead className="bg-muted/50 text-muted-foreground">
           {table.getHeaderGroups().map((headerGroup) => (
@@ -82,6 +82,8 @@ export function DataTable<TData, TValue>({
           {paddingTop > 0 && <tr style={{ height: `${paddingTop}px` }} aria-hidden="true" />}
           {virtualRows.map((virtualRow) => {
             const row = rows[virtualRow.index];
+            const rowId = (row.original as { id?: string }).id ?? "";
+            const isGapBorder = gapBorderId === rowId;
             return (
               <tr
                 key={row.id}
@@ -89,9 +91,25 @@ export function DataTable<TData, TValue>({
                 data-state={row.getIsSelected() ? "selected" : undefined}
                 className={cn(
                   "ui-table-row border-b border-border/40 transition-colors hover:bg-muted/30 data-[state=selected]:bg-muted",
-                  highlightedRows[(row.original as { id?: string }).id ?? ""] ? "row-highlight" : ""
+                  highlightedRows[rowId] ? "row-highlight" : "",
+                  errorHighlightIds.includes(rowId)
+                    ? "bg-destructive/10"
+                    : "",
+                  isGapBorder ? "relative overflow-hidden border-b border-transparent" : ""
                 )}
-                style={{ height: `${virtualRow.size}px` }}
+                style={{
+                  height: `${virtualRow.size}px`,
+                  ...(isGapBorder
+                    ? {
+                        backgroundImage:
+                          "linear-gradient(to right, transparent, rgba(239,68,68,0.45) 8%, rgba(239,68,68,0.7) 50%, rgba(239,68,68,0.45) 92%, transparent)",
+                        backgroundRepeat: "no-repeat",
+                        backgroundSize: "100% 2px",
+                        backgroundPosition: "0 calc(100% - 0.5px)",
+                        boxShadow: "0 0 10px rgba(239,68,68,0.22)",
+                      }
+                    : {}),
+                }}
               >
                 {row.getVisibleCells().map((cell) => (
                   <td
