@@ -1,0 +1,258 @@
+Product Requirements Document
+PR Document Helper
+Travel History, Address History, Gap Detection, Export-Ready Tables
+Summary
+PR Document Helper is a small, offline-first tool that helps Canadian immigration applicants build clean, continuous Travel History and Address History tables with automatic gap and overlap detection, then export them as attachment-ready CSV and PDF.
+The core pain it solves: IRCC forms and portals often require long date ranges (for example travel history for the last 10 years or since age 18) and expect continuity with no unexplained gaps, but most applicants end up juggling spreadsheets, PDFs, and memory. 
+Canada
++2
+Canada
++2
+Problem Statement
+Applicants need to provide accurate, continuous timelines for travel and addresses, often across many years. Manual entry is error-prone, especially for:
+gaps (missing months)
+overlaps (two addresses covering the same dates)
+inconsistent date boundaries (end date earlier than start date)
+“I don’t remember exact dates” situations
+IRCC guidance includes travel history requirements (IMM 5562) and other sections where IRCC explicitly says to avoid gaps in history tables. 
+Canada
++2
+Canada
++2
+Goals
+Make it fast to build Travel History and Address History in the formats applicants actually submit.
+Prevent common timeline mistakes before submission (gaps, overlaps, out-of-range entries).
+Generate clean exports that can be uploaded as supporting documents.
+Non-Goals
+Not legal advice, not a replacement for IRCC forms.
+No cloud sync in v1.
+No automatic retrieval from passports, emails, airlines, or border databases in v1.
+No direct “fill IRCC PDF” automation in v1 (maintenance risk, brittle).
+Target Users
+Primary Persona: DIY PR Applicant
+Filling PR portal forms or requested supplementary tables
+Has multi-country travel and multiple addresses
+Wants confidence their tables have no gaps and export cleanly
+Secondary Persona: Immigration Consultant or Lawyer Assistant
+Needs standardized client intake tables
+Wants consistent exports and fewer back-and-forth corrections
+Adjacent Persona: PR Card Renewal and Citizenship-Planners
+PR card renewal workflows also include address history requirements with “account for each month” and “leave no gaps” style language. 
+Canada
++1
+
+Citizenship applicants often keep travel logs and IRCC provides a travel journal as a memory aid. 
+Canada
++1
+Market Evidence
+IRCC reports 483,640 new permanent residents admitted in 2024, showing a large ongoing population moving through PR-related processes. 
+Canada
++1
+Express Entry alone issued 98,903 ITAs in 2024. 
+Canada
++1
+Large tracking communities exist (Immitracker markets 200,000+ registered users), indicating sustained appetite for tools that reduce uncertainty and effort around applications. 
+Immitracker
+Competitive Landscape
+What Users Use Today
+Generic PDF editors / “fill online” sites
+They help fill forms online but do not focus on validation, gap detection, or producing standardized attachment tables. 
+pdfFiller
++1
+Official IRCC tools (adjacent, not PR table builders)
+Citizenship physical presence calculator and travel journal help remember trips, but they are not PR travel history table builders. 
+eServices
++1
+Spreadsheets, templates, and community advice
+Forum and Reddit threads show people asking for templates and struggling with what format to use when asked for travel history tables. 
+Canadavisa.com
++1
+
+There are also DIY spreadsheet projects (for example a GitHub travel log aimed at citizenship-style tracking), which validates the need but does not package the PR-specific workflow. 
+GitHub
+Differentiation
+PR Document Helper is not “another template”. It is a validator and exporter:
+timeline engine that guarantees continuity
+“fix it” suggestions (auto-fill missing gap row)
+attachment-ready PDF and CSV exports
+Product Scope
+Core Modules (v1)
+Travel History Builder (IRCC style)
+Address History Builder (IRCC style)
+Timeline Validator (gap, overlap, range checks)
+Export Engine (CSV, PDF)
+Optional Modules (v1.1+)
+Personal History Builder (activities timeline aligned with IRCC expectations for continuous history) 
+Canada
++1
+“Request a CBSA Travel History Report” helper page with instructions and a place to reconcile entries (no data import in v1). 
+Canada Border Services Agency
++1
+Functional Requirements
+FR1: Project Setup
+User creates a “Profile” (local only):
+name (optional)
+UCI placeholder (optional)
+timeframe rule:
+“Last 10 years”
+“Since age 18”
+custom start date
+Travel history requirement language commonly references “last 10 years or since 18”. 
+Canada
++1
+FR2: Travel History Table
+Columns (editable, configurable):
+From (date)
+To (date)
+Destination (country, optional city)
+Purpose (dropdown + free text)
+Notes (optional)
+UX requirements:
+fast add row
+duplicate row
+paste multiple rows from clipboard
+bulk edit purpose
+sort newest to oldest and oldest to newest
+FR3: Address History Table
+Columns:
+From (date)
+To (date)
+Country
+Province/State
+City
+Address line (optional)
+Postal/ZIP (optional)
+Notes (optional)
+UX requirements:
+“Still living here” toggle that sets To = Today (or export date)
+IRCC explicitly discusses how to handle “to” dates if you still live at an address. 
+IRCC
+FR4: Validation And Warnings
+Validation runs live and on export. It produces:
+Errors (block export unless overridden):
+end date before start date
+invalid dates
+overlaps (two entries covering same time)
+Warnings (allow export with acknowledgement):
+gaps in coverage within selected timeframe
+missing required fields (destination blank)
+suspicious micro-gaps (1 day gaps) depending on chosen date boundary rules
+IRCC guidance and help content repeatedly emphasize “no gaps” in history tables in certain workflows. 
+Canada
++1
+FR5: Gap Fix Suggestions
+When a gap is detected:
+show exact missing range
+offer “Add filler entry” button:
+Travel: “No travel (in country of residence)” entry
+Address: “Same as previous address” or “Unknown, add note” entry
+FR6: Export
+Export CSV for Travel and Address
+Export PDF:
+clean table layout with header metadata (Profile name, generated date)
+page breaks
+repeated table headers per page
+optional footnote area for explanations
+FR7: Import
+Import from CSV (user’s old spreadsheet)
+Smart mapping for common column names (From, Start Date, Date From, etc.)
+Non-Functional Requirements
+Privacy And Security
+Offline by default, all data stored locally
+“Export only” workflow supported with no account creation
+Optional encrypted local database (recommended)
+Clear disclaimer: not affiliated with IRCC, no legal advice
+Performance
+Must handle 2,000+ rows without UI freezing (power users with lots of travel)
+Exports under 3 seconds for typical datasets (<300 rows)
+Reliability
+Auto-save
+Versioned backups (local snapshots) so users can roll back changes
+User Experience
+Primary Screen Layout (One Window)
+Top segmented control: Travel | Address | (Personal History later)
+Left: table editor
+Right: Validation panel
+“Errors” section
+“Warnings” section
+“Fix suggestions” buttons
+Bottom bar:
+Import
+Export CSV
+Export PDF
+Core Flows
+Create profile → choose timeframe rule → start filling table → resolve errors → export
+Import old spreadsheet → map columns → validator highlights issues → export
+“I don’t remember dates” flow: user enters approximate dates, marks row as “estimated”, validator allows export but flags for review
+Data Model (High Level)
+Profile
+id
+name, optional metadata
+timeframe rule (start date logic)
+Entry (TravelEntry, AddressEntry)
+startDate, endDate
+fields per table
+flags: estimatedDates, notes
+Validator produces:
+Issue
+type (gap, overlap, invalid)
+range (start-end)
+affected rows
+suggestedFix actions
+Technical Approach
+Option A: macOS App (Recommended For Trust)
+SwiftUI UI
+Local persistence: SQLite (GRDB) or Core Data
+PDF export: PDFKit or custom drawing
+Pros:
+best privacy story
+fast native table editing
+Cons:
+more Apple-specific development
+Option B: Web App (Fastest Iteration)
+Next.js or similar
+Local-only storage (IndexedDB)
+PDF export via client-side library
+Pros:
+easiest distribution
+easiest iteration
+Cons:
+harder to win trust for sensitive data unless you are very explicit about local-only
+MVP Milestones
+Milestone 1: Table Editor + CSV Export
+Travel and Address tables
+Import CSV
+Basic validation (date order, overlap, gap detection)
+Export CSV
+Milestone 2: PDF Export + Fix Suggestions
+PDF export with clean pagination
+One-click “fill gap” actions
+“Today” handling for open-ended entries 
+IRCC
+Milestone 3: Polish + Packaging
+Undo/redo
+Keyboard shortcuts
+Local backups
+Simple onboarding and templates
+Success Metrics
+Time to first export under 10 minutes for a typical user
+Export success rate (no blocking errors) over 80% after first validation pass
+Refund rate under 5% if paid
+High intent signal: % users who return to edit after import
+Monetization (Simple, Realistic)
+Free:
+unlimited rows
+CSV export
+Paid (one-time or small annual):
+PDF export
+gap fix suggestions
+multiple profiles
+backup/restore
+Risks And Mitigations
+People interpret it as immigration advice
+Mitigation: strong disclaimers, link to relevant IRCC instructions (read-only references) and phrase guidance as “formatting and validation”, not “what you should claim”.
+Form and portal requirements vary by stream
+Mitigation: keep exports generic “attachment tables”, offer presets but let users customize columns.
+Trust barrier due to sensitive data
+Mitigation: offline-first, no accounts, transparent “data never leaves your device” design.
+If you tell me which platform you want first (macOS app or web app) and whether you want to cover just Travel + Address or also Personal History in v1, I’ll turn this PRD into an implementation checklist with a strict “build this, not that” scope and a data schema you can drop directly into code.
