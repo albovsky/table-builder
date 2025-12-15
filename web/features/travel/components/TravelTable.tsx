@@ -62,11 +62,6 @@ export function TravelTable() {
     mod.exportTravelPDF(data);
   };
 
-  const sortedData = useMemo(
-    () => [...data].sort((a, b) => a.startDate.localeCompare(b.startDate)),
-    [data]
-  );
-
   const columns = useMemo<ColumnDef<TravelEntry>[]>(() => {
     const selectionCol: ColumnDef<TravelEntry> = {
       id: "select",
@@ -213,17 +208,17 @@ export function TravelTable() {
       </div>
       <div className="flex-1 min-h-0">
         <DataTable
-            columns={columns}
-            data={sortedData}
-            onRowUpdate={handleRowUpdate}
-            rowSelection={rowSelection}
-            onRowSelectionChange={(updater) => {
-              if (typeof updater === "function") {
-                setRowSelection((prev) => updater(prev));
-              } else {
-                setRowSelection(updater);
-              }
-            }}
+          columns={columns}
+          data={data}
+          onRowUpdate={handleRowUpdate}
+          rowSelection={rowSelection}
+          onRowSelectionChange={(updater) => {
+            if (typeof updater === "function") {
+              setRowSelection((prev) => updater(prev));
+            } else {
+              setRowSelection(updater);
+            }
+          }}
         />
       </div>
 

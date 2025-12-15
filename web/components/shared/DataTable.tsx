@@ -7,6 +7,7 @@ import {
   useReactTable,
   type RowSelectionState,
 } from "@tanstack/react-table";
+import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/store/useStore";
 
@@ -42,6 +43,17 @@ export function DataTable<TData, TValue>({
   });
 
   const { rows } = table.getRowModel();
+  const rowVirtualizer = useWindowVirtualizer({
+    count: rows.length,
+    estimateSize: () => 56,
+    overscan: 8,
+  });
+  const virtualRows = rowVirtualizer.getVirtualItems();
+  const paddingTop = virtualRows.length > 0 ? virtualRows[0].start : 0;
+  const paddingBottom =
+    virtualRows.length > 0
+      ? rowVirtualizer.getTotalSize() - (virtualRows[virtualRows.length - 1].end)
+      : 0;
 
   return (
     <div className="w-full rounded-md border border-border bg-card">
@@ -67,26 +79,33 @@ export function DataTable<TData, TValue>({
           ))}
         </thead>
         <tbody>
-          {rows.map((row) => (
-            <tr
-              key={row.id}
-              data-state={row.getIsSelected() ? "selected" : undefined}
-              className={cn(
-                "ui-table-row border-b border-border/40 transition-colors hover:bg-muted/30 data-[state=selected]:bg-muted",
-                highlightedRows[(row.original as { id?: string }).id ?? ""] ? "row-highlight" : ""
-              )}
-            >
-              {row.getVisibleCells().map((cell) => (
-                <td
-                  key={cell.id}
-                  className="ui-table-cell h-full align-middle"
-                  style={cell.column.getSize() ? { width: cell.column.getSize() } : undefined}
-                >
-                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                </td>
-              ))}
-            </tr>
-          ))}
+          {paddingTop > 0 && <tr style={{ height: `${paddingTop}px` }} aria-hidden="true" />}
+          {virtualRows.map((virtualRow) => {
+            const row = rows[virtualRow.index];
+            return (
+              <tr
+                key={row.id}
+                data-index={virtualRow.index}
+                data-state={row.getIsSelected() ? "selected" : undefined}
+                className={cn(
+                  "ui-table-row border-b border-border/40 transition-colors hover:bg-muted/30 data-[state=selected]:bg-muted",
+                  highlightedRows[(row.original as { id?: string }).id ?? ""] ? "row-highlight" : ""
+                )}
+                style={{ height: `${virtualRow.size}px` }}
+              >
+                {row.getVisibleCells().map((cell) => (
+                  <td
+                    key={cell.id}
+                    className="ui-table-cell h-full align-middle"
+                    style={cell.column.getSize() ? { width: cell.column.getSize() } : undefined}
+                  >
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </td>
+                ))}
+              </tr>
+            );
+          })}
+          {paddingBottom > 0 && <tr style={{ height: `${paddingBottom}px` }} aria-hidden="true" />}
         </tbody>
       </table>
     </div>

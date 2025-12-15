@@ -36,7 +36,6 @@
 - [x] Undo/redo via snapshot stack (completed).
 - [x] Keyboard shortcuts (undo/redo, add/delete/duplicate row, switch tabs, open validation panel).
 - [x] Backup/restore: versioned local backups with pruning; restore validation; UI for backup/restore (completed).
-- [ ] Bulk edits: multi-select; bulk delete/duplicate/set purpose/city; single-snapshot undo; confirmations.
-- [ ] Estimated date flag handling: model + UI indicator; validation; import/export preservation.
-- [ ] Performance harness + benchmarks (seed 2k rows, measure add/delete/duplicate/render).
+- [x] Bulk edits: multi-select; bulk delete/duplicate/set purpose/city; single-snapshot undo; confirmations.
+- [x] Performance harness + benchmarks (seed 2k rows, measure add/delete/duplicate/render).
 - [ ] Refine warning copy and date-format display alignment.

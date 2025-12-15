@@ -21,6 +21,8 @@ interface AppState {
   setLayoutMode: (mode: "centered" | "wide") => void;
   dateFormat: "iso" | "mdy" | "dmy" | "mdy-mon" | "dmy-mon";
   setDateFormat: (fmt: "iso" | "mdy" | "dmy" | "mdy-mon" | "dmy-mon") => void;
+  perfMode: boolean; // dev-only perf mode (skip snapshots)
+  setPerfMode: (val: boolean) => void;
   highlightedRows: Record<string, boolean>;
   markHighlightedRows: (ids: string[]) => void;
   travelSelection: RowSelectionState;
@@ -51,6 +53,8 @@ export const useStore = create<AppState>()(
       setLayoutMode: (mode) => set({ layoutMode: mode }),
       dateFormat: "iso",
       setDateFormat: (fmt) => set({ dateFormat: fmt }),
+      perfMode: false,
+      setPerfMode: (val) => set({ perfMode: val }),
       highlightedRows: {},
       travelSelection: {},
       addressSelection: {},
@@ -58,6 +62,7 @@ export const useStore = create<AppState>()(
       setAddressSelection: (sel) => set({ addressSelection: sel }),
       markHighlightedRows: (ids) => {
         if (!ids.length) return;
+        if (useStore.getState().perfMode) return;
         set((state) => {
           const next = { ...state.highlightedRows };
           ids.forEach((id) => {
@@ -105,6 +110,7 @@ export const useStore = create<AppState>()(
       partialize: (state) => ({
         layoutMode: state.layoutMode,
         dateFormat: state.dateFormat,
+        perfMode: state.perfMode,
       }),
     }
   )

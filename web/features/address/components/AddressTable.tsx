@@ -62,11 +62,6 @@ export function AddressTable() {
     mod.exportAddressPDF(data);
   };
 
-  const sortedData = useMemo(
-    () => [...data].sort((a, b) => a.startDate.localeCompare(b.startDate)),
-    [data]
-  );
-
   const columns = useMemo<ColumnDef<AddressEntry>[]>(() => {
     const selectionCol: ColumnDef<AddressEntry> = {
       id: "select",
@@ -184,17 +179,17 @@ export function AddressTable() {
       </div>
       <div className="flex-1 min-h-0">
         <DataTable
-            columns={columns}
-            data={sortedData}
-            onRowUpdate={handleRowUpdate}
-            rowSelection={rowSelection}
-            onRowSelectionChange={(updater) => {
-              if (typeof updater === "function") {
-                setRowSelection((prev) => updater(prev));
-              } else {
-                setRowSelection(updater);
-              }
-            }}
+          columns={columns}
+          data={data}
+          onRowUpdate={handleRowUpdate}
+          rowSelection={rowSelection}
+          onRowSelectionChange={(updater) => {
+            if (typeof updater === "function") {
+              setRowSelection((prev) => updater(prev));
+            } else {
+              setRowSelection(updater);
+            }
+          }}
         />
       </div>
 

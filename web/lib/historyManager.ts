@@ -2,6 +2,8 @@ import { db, TravelEntry, AddressEntry } from "@/db/db";
 import { useStore, type HistorySnapshot } from "@/store/useStore";
 
 const MAX_ITEMS = 50;
+let lastSnapshotAt = 0;
+const SNAPSHOT_THROTTLE_MS = 300;
 
 export async function captureSnapshot(): Promise<HistorySnapshot> {
   const [travel, address] = await Promise.all([
@@ -30,7 +32,12 @@ export async function applySnapshot(snapshot: HistorySnapshot) {
 }
 
 export async function pushSnapshotFromDb() {
+  const nowTs = Date.now();
+  if (nowTs - lastSnapshotAt < SNAPSHOT_THROTTLE_MS) {
+    return;
+  }
   const snapshot = await captureSnapshot();
+  lastSnapshotAt = nowTs;
   useStore.getState().pushSnapshot(snapshot);
 }
 

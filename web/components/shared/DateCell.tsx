@@ -1,6 +1,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { formatDateDisplay, parseDateDisplay, type DateFormat } from "@/lib/dateFormat";
+import { memo } from "react";
 
 interface DateCellProps {
   getValue: () => unknown;
@@ -18,7 +19,7 @@ interface DateCellProps {
   placeholder?: string;
 }
 
-export function DateCell({
+function DateCellComponent({
   getValue,
   row,
   column,
@@ -64,3 +65,5 @@ export function DateCell({
     </div>
   );
 }
+
+export const DateCell = memo(DateCellComponent);

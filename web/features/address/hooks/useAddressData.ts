@@ -5,7 +5,10 @@ import { pushSnapshotFromDb } from "@/lib/historyManager";
 import { useStore } from "@/store/useStore";
 
 export async function addAddressEntry() {
-  await pushSnapshotFromDb();
+  const { perfMode } = useStore.getState();
+  if (!perfMode) {
+    await pushSnapshotFromDb();
+  }
   const newEntry: AddressEntry = {
     id: nanoid(),
     startDate: new Date().toISOString().split("T")[0],
@@ -16,56 +19,87 @@ export async function addAddressEntry() {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-  await db.address.add(newEntry);
-  useStore.getState().markHighlightedRows([newEntry.id]);
+  await db.transaction("rw", db.address, async () => {
+    await db.address.add(newEntry);
+  });
+  if (!perfMode) {
+    useStore.getState().markHighlightedRows([newEntry.id]);
+  }
 }
 
 export async function updateAddressEntry(id: string, updates: Partial<AddressEntry>) {
-  await pushSnapshotFromDb();
-  await db.address.update(id, {
-    ...updates,
-    updatedAt: new Date().toISOString(),
+  const { perfMode } = useStore.getState();
+  if (!perfMode) {
+    await pushSnapshotFromDb();
+  }
+  await db.transaction("rw", db.address, async () => {
+    await db.address.update(id, {
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    });
   });
 }
 
 export async function deleteAddressEntry(id: string) {
-  await pushSnapshotFromDb();
-  await db.address.delete(id);
+  const { perfMode } = useStore.getState();
+  if (!perfMode) {
+    await pushSnapshotFromDb();
+  }
+  await db.transaction("rw", db.address, async () => {
+    await db.address.delete(id);
+  });
 }
 
 export async function duplicateAddressEntry(id: string) {
   const entry = await db.address.get(id);
   if (!entry) return;
-  await pushSnapshotFromDb();
+  const { perfMode } = useStore.getState();
+  if (!perfMode) {
+    await pushSnapshotFromDb();
+  }
   const copy: AddressEntry = {
     ...entry,
     id: nanoid(),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-  await db.address.add(copy);
-  useStore.getState().markHighlightedRows([copy.id]);
+  await db.transaction("rw", db.address, async () => {
+    await db.address.add(copy);
+  });
+  if (!perfMode) {
+    useStore.getState().markHighlightedRows([copy.id]);
+  }
 }
 
 export async function deleteLastAddressEntry() {
   const last = await db.address.orderBy("startDate").last();
   if (!last) return;
-  await pushSnapshotFromDb();
+  const { perfMode } = useStore.getState();
+  if (!perfMode) {
+    await pushSnapshotFromDb();
+  }
   await db.address.delete(last.id);
 }
 
 export async function duplicateLastAddressEntry() {
   const last = await db.address.orderBy("startDate").last();
   if (!last) return;
-  await pushSnapshotFromDb();
+  const { perfMode } = useStore.getState();
+  if (!perfMode) {
+    await pushSnapshotFromDb();
+  }
   const copy: AddressEntry = {
     ...last,
     id: nanoid(),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-  await db.address.add(copy);
-  useStore.getState().markHighlightedRows([copy.id]);
+  await db.transaction("rw", db.address, async () => {
+    await db.address.add(copy);
+  });
+  if (!perfMode) {
+    useStore.getState().markHighlightedRows([copy.id]);
+  }
 }
 
 export function useAddressData() {
@@ -84,8 +118,13 @@ export function useAddressData() {
 
 export async function bulkDeleteAddressEntries(ids: string[]) {
   if (!ids.length) return;
-  await pushSnapshotFromDb();
-  await db.address.bulkDelete(ids);
+  const { perfMode } = useStore.getState();
+  if (!perfMode) {
+    await pushSnapshotFromDb();
+  }
+  await db.transaction("rw", db.address, async () => {
+    await db.address.bulkDelete(ids);
+  });
 }
 
 export async function bulkDuplicateAddressEntries(ids: string[]) {
@@ -103,18 +142,30 @@ export async function bulkDuplicateAddressEntries(ids: string[]) {
     });
   });
   if (!copies.length) return;
-  await pushSnapshotFromDb();
-  await db.address.bulkAdd(copies);
-  useStore.getState().markHighlightedRows(copies.map((c) => c.id));
+  const { perfMode } = useStore.getState();
+  if (!perfMode) {
+    await pushSnapshotFromDb();
+  }
+  await db.transaction("rw", db.address, async () => {
+    await db.address.bulkAdd(copies);
+  });
+  if (!perfMode) {
+    useStore.getState().markHighlightedRows(copies.map((c) => c.id));
+  }
 }
 
 export async function bulkUpdateAddressLocation(ids: string[], city: string, country: string) {
   if (!ids.length) return;
-  await pushSnapshotFromDb();
+  const { perfMode } = useStore.getState();
+  if (!perfMode) {
+    await pushSnapshotFromDb();
+  }
   const nowIso = new Date().toISOString();
-  await db.address.where("id").anyOf(ids).modify({
-    city,
-    country,
-    updatedAt: nowIso,
+  await db.transaction("rw", db.address, async () => {
+    await db.address.where("id").anyOf(ids).modify({
+      city,
+      country,
+      updatedAt: nowIso,
+    });
   });
 }

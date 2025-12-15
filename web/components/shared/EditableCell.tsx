@@ -2,6 +2,7 @@
 
 import * as React from "react";
 import { cn } from "@/lib/utils";
+import { memo } from "react";
 
 interface EditableCellProps extends React.InputHTMLAttributes<HTMLInputElement> {
   getValue: () => unknown;
@@ -16,7 +17,7 @@ interface EditableCellProps extends React.InputHTMLAttributes<HTMLInputElement> 
   };
 }
 
-export function EditableCell({
+function EditableCellComponent({
   getValue,
   row,
   column,
@@ -50,15 +51,17 @@ export function EditableCell({
 
   return (
     <div className={cn("relative w-full h-full min-h-[var(--table-row-height)] flex items-center", className)}>
-        <input
-            {...props}
-            value={(value ?? "") as string}
-            onChange={(e) => setValue(e.target.value)}
-            onBlur={onBlur}
-            onKeyDown={onKeyDown}
-            className="w-full h-full px-2 bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-ring rounded-sm placeholder:text-muted-foreground/50 transition-colors hover:bg-muted/20 ui-text-body"
-            placeholder={props.placeholder || "Empty"}
-        />
+      <input
+        {...props}
+        value={(value ?? "") as string}
+        onChange={(e) => setValue(e.target.value)}
+        onBlur={onBlur}
+        onKeyDown={onKeyDown}
+        className="w-full h-full px-2 bg-transparent border-none focus:outline-none focus:ring-1 focus:ring-ring rounded-sm placeholder:text-muted-foreground/50 transition-colors hover:bg-muted/20 ui-text-body"
+        placeholder={props.placeholder || "Empty"}
+      />
     </div>
   );
 }
+
+export const EditableCell = memo(EditableCellComponent);

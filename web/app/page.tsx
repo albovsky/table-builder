@@ -5,6 +5,7 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { TravelTable } from "@/features/travel/components/TravelTable";
 import { AddressTable } from "@/features/address/components/AddressTable";
 import { ValidationPanel } from "@/components/shared/ValidationPanel";
+import { DebugPanel } from "@/components/shared/DebugPanel";
 import { useStore } from "@/store/useStore";
 import { useValidationWorker } from "@/hooks/useValidationWorker";
 import { undoSnapshot, redoSnapshot } from "@/lib/historyManager";
@@ -128,6 +129,7 @@ export default function Home() {
         {workMode === "travel" ? <TravelTable /> : <AddressTable />}
       </div>
       <ValidationPanel />
+      {process.env.NODE_ENV !== "production" && <DebugPanel />}
     </div>
   );
 }

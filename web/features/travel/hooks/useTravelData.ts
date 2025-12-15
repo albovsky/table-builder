@@ -41,7 +41,10 @@ function randomDateRangeWithinYears(years = 10) {
 }
 
 export async function addTravelEntry() {
-  await pushSnapshotFromDb();
+  const { perfMode } = useStore.getState();
+  if (!perfMode) {
+    await pushSnapshotFromDb();
+  }
   const newEntry: TravelEntry = {
     id: nanoid(),
     startDate: new Date().toISOString().split("T")[0],
@@ -53,60 +56,92 @@ export async function addTravelEntry() {
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-  await db.travel.add(newEntry);
-  useStore.getState().markHighlightedRows([newEntry.id]);
+  await db.transaction("rw", db.travel, async () => {
+    await db.travel.add(newEntry);
+  });
+  if (!perfMode) {
+    useStore.getState().markHighlightedRows([newEntry.id]);
+  }
 }
 
 export async function updateTravelEntry(id: string, updates: Partial<TravelEntry>) {
-  await pushSnapshotFromDb();
-  await db.travel.update(id, {
-    ...updates,
-    updatedAt: new Date().toISOString(),
+  const { perfMode } = useStore.getState();
+  if (!perfMode) {
+    await pushSnapshotFromDb();
+  }
+  await db.transaction("rw", db.travel, async () => {
+    await db.travel.update(id, {
+      ...updates,
+      updatedAt: new Date().toISOString(),
+    });
   });
 }
 
 export async function deleteTravelEntry(id: string) {
-  await pushSnapshotFromDb();
+  const { perfMode } = useStore.getState();
+  if (!perfMode) {
+    await pushSnapshotFromDb();
+  }
   await db.travel.delete(id);
 }
 
 export async function duplicateTravelEntry(id: string) {
   const entry = await db.travel.get(id);
   if (!entry) return;
-  await pushSnapshotFromDb();
+  const { perfMode } = useStore.getState();
+  if (!perfMode) {
+    await pushSnapshotFromDb();
+  }
   const copy: TravelEntry = {
     ...entry,
     id: nanoid(),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-  await db.travel.add(copy);
-  useStore.getState().markHighlightedRows([copy.id]);
+  await db.transaction("rw", db.travel, async () => {
+    await db.travel.add(copy);
+  });
+  if (!perfMode) {
+    useStore.getState().markHighlightedRows([copy.id]);
+  }
 }
 
 export async function deleteLastTravelEntry() {
   const last = await db.travel.orderBy("startDate").last();
   if (!last) return;
-  await pushSnapshotFromDb();
+  const { perfMode } = useStore.getState();
+  if (!perfMode) {
+    await pushSnapshotFromDb();
+  }
   await db.travel.delete(last.id);
 }
 
 export async function duplicateLastTravelEntry() {
   const last = await db.travel.orderBy("startDate").last();
   if (!last) return;
-  await pushSnapshotFromDb();
+  const { perfMode } = useStore.getState();
+  if (!perfMode) {
+    await pushSnapshotFromDb();
+  }
   const copy: TravelEntry = {
     ...last,
     id: nanoid(),
     createdAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   };
-  await db.travel.add(copy);
-  useStore.getState().markHighlightedRows([copy.id]);
+  await db.transaction("rw", db.travel, async () => {
+    await db.travel.add(copy);
+  });
+  if (!perfMode) {
+    useStore.getState().markHighlightedRows([copy.id]);
+  }
 }
 
 export async function addRandomTravelEntries(count = 100) {
-  await pushSnapshotFromDb();
+  const { perfMode } = useStore.getState();
+  if (!perfMode) {
+    await pushSnapshotFromDb();
+  }
   const nowIso = new Date().toISOString();
 
   const entries: TravelEntry[] = Array.from({ length: count }).map(() => {
@@ -147,8 +182,13 @@ export function useTravelData() {
 
 export async function bulkDeleteTravelEntries(ids: string[]) {
   if (!ids.length) return;
-  await pushSnapshotFromDb();
-  await db.travel.bulkDelete(ids);
+  const { perfMode } = useStore.getState();
+  if (!perfMode) {
+    await pushSnapshotFromDb();
+  }
+  await db.transaction("rw", db.travel, async () => {
+    await db.travel.bulkDelete(ids);
+  });
 }
 
 export async function bulkDuplicateTravelEntries(ids: string[]) {
@@ -166,27 +206,44 @@ export async function bulkDuplicateTravelEntries(ids: string[]) {
     });
   });
   if (!copies.length) return;
-  await pushSnapshotFromDb();
-  await db.travel.bulkAdd(copies);
-  useStore.getState().markHighlightedRows(copies.map((c) => c.id));
+  const { perfMode } = useStore.getState();
+  if (!perfMode) {
+    await pushSnapshotFromDb();
+  }
+  await db.transaction("rw", db.travel, async () => {
+    await db.travel.bulkAdd(copies);
+  });
+  if (!perfMode) {
+    useStore.getState().markHighlightedRows(copies.map((c) => c.id));
+  }
 }
 
 export async function bulkUpdateTravelPurpose(ids: string[], purposeCode: string) {
   if (!ids.length) return;
-  await pushSnapshotFromDb();
+  const { perfMode } = useStore.getState();
+  if (!perfMode) {
+    await pushSnapshotFromDb();
+  }
   const nowIso = new Date().toISOString();
-  await db.travel.where("id").anyOf(ids).modify({ purposeCode, updatedAt: nowIso });
+  await db.transaction("rw", db.travel, async () => {
+    await db.travel.where("id").anyOf(ids).modify({ purposeCode, updatedAt: nowIso });
+  });
 }
 
 export async function bulkUpdateTravelLocation(ids: string[], city: string, country: string) {
   if (!ids.length) return;
-  await pushSnapshotFromDb();
+  const { perfMode } = useStore.getState();
+  if (!perfMode) {
+    await pushSnapshotFromDb();
+  }
   const nowIso = new Date().toISOString();
   const destination = city ? `${city}, ${country}` : country;
-  await db.travel.where("id").anyOf(ids).modify({
-    destinationCity: city,
-    destinationCountry: country,
-    destination,
-    updatedAt: nowIso,
+  await db.transaction("rw", db.travel, async () => {
+    await db.travel.where("id").anyOf(ids).modify({
+      destinationCity: city,
+      destinationCountry: country,
+      destination,
+      updatedAt: nowIso,
+    });
   });
 }
