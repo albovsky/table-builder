@@ -16,9 +16,9 @@ const eslintConfig = defineConfig([
         "check-file/folder-naming-convention": [
             "error",
             {
-                "web/features/*/": "kebab-case",
-                "web/components/*/": "kebab-case",
-                "web/services/*/": "kebab-case",
+                "web/features/*/": "KEBAB_CASE",
+                "web/components/*/": "KEBAB_CASE",
+                "web/services/*/": "KEBAB_CASE",
             }
         ],
         "check-file/filename-naming-convention": [

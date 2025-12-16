@@ -29,38 +29,44 @@ export function ExportDialog({
   const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
-    if (!isOpen) {
-      setProgress(0);
-      setIsExporting(false);
-      return;
-    }
+    if (!isOpen) return undefined;
 
-    // Clipboard already executed in table component before dialog opened
-    // Only PDF/CSV need to execute after animation
-    setIsExporting(true);
-    
-    // Animate the progress bar
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          // Execute delayed exports (PDF/CSV) after animation
-          // Skip clipboard since it already executed
-          if (exportType !== "Clipboard") {
-            onExport();
-          }
-          setIsExporting(false);
-          return 100;
+    let started = false;
+    let localProgress = 0;
+
+    const interval = window.setInterval(() => {
+      if (!started) {
+        setIsExporting(true);
+        started = true;
+      }
+
+      localProgress = Math.min(100, localProgress + 5);
+      setProgress(localProgress);
+
+      if (localProgress >= 100) {
+        window.clearInterval(interval);
+        if (exportType !== "Clipboard") {
+          onExport();
         }
-        return prev + (100 / 20); // 20 frames over 2 seconds
-      });
+        setIsExporting(false);
+      }
     }, 100);
 
-    return () => clearInterval(interval);
+    return () => {
+      window.clearInterval(interval);
+      setIsExporting(false);
+      setProgress(0);
+    };
   }, [isOpen, onExport, exportType]);
 
+  const handleClose = () => {
+    setIsExporting(false);
+    setProgress(0);
+    onClose();
+  };
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">

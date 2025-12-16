@@ -3,23 +3,29 @@
 import { ColumnDef } from "@tanstack/react-table";
 import { AddressEntry } from "@/db/db";
 import { EditableCell } from "@/components/shared/EditableCell";
-import { useAddressData } from "../hooks/useAddressData";
-import { Checkbox } from "@/components/ui/checkbox"; // Assuming shadcn checkbox exists or I'll use native input for now to avoid dependency check delay
+import { Checkbox } from "@/components/ui/checkbox";
 import { DateCell } from "@/components/shared/DateCell";
 import { type DateFormat } from "@/lib/dateFormat";
 import { db } from "@/db/db";
 
-// Helper to cast EditableCell as a compatible cell renderer type
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const cellRenderer = (props: any) => <EditableCell {...props} />;
+type AddressCellContext = {
+  getValue: () => unknown;
+  row: { index: number; original: AddressEntry };
+  column: { id: string };
+  table: {
+    options: {
+      meta?: {
+        updateData: (rowIndex: number, columnId: string, value: unknown) => void;
+      };
+    };
+  };
+};
 
 // Custom cell for End Date to handle "Still living here"
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const EndDateCell = (props: any) => {
-    const { getValue, row, column, table } = props;
+const EndDateCell = (props: AddressCellContext & { dateFormat: DateFormat }) => {
+    const { getValue, row, column, table, dateFormat } = props;
     const value = getValue();
     const isCurrent = value === null;
-    const dateFormat = props.dateFormat as DateFormat;
 
     const handleCheck = async (checked: boolean) => {
          if (checked) {
@@ -33,9 +39,7 @@ const EndDateCell = (props: any) => {
              const todayIso = new Date().toISOString().split("T")[0];
              await db.transaction("rw", db.address, async () => {
                 await db.address
-                  .where("endDate")
-                  .equals(null)
-                  .and((entry) => entry.id !== latest.id)
+                  .filter((entry) => entry.endDate === null && entry.id !== latest.id)
                   .modify({ endDate: todayIso, updatedAt: new Date().toISOString() });
              });
              table.options.meta?.updateData(row.index, column.id, null);
@@ -70,7 +74,7 @@ const EndDateCell = (props: any) => {
 }
 
 
-export function useAddressColumns(dateFormat: DateFormat): ColumnDef<AddressEntry>[] {
+export function buildAddressColumns(dateFormat: DateFormat): ColumnDef<AddressEntry>[] {
   return [
     {
       accessorKey: "startDate",

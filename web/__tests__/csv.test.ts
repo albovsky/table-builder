@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { importTravelCSV, importAddressCSV } from "../services/import/csvImporter";
-import { exportTravelCSV, exportAddressCSV } from "../services/export/csvExporter";
-import { TravelEntry, AddressEntry } from "../db/db";
+import { exportTravelCSV } from "../services/export/csvExporter";
+import { TravelEntry } from "../db/db";
 
 describe("CSV Services", () => {
   describe("Travel CSV", () => {

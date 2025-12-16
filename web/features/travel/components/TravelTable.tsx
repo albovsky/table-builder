@@ -2,7 +2,7 @@
 
 import { DataTable } from "@/components/shared/DataTable";
 import { useTravelData, bulkDeleteTravelEntries, bulkDuplicateTravelEntries, bulkUpdateTravelPurpose, bulkUpdateTravelLocation } from "../hooks/useTravelData";
-import { useTravelColumns } from "./TravelColumns";
+import { buildTravelColumns } from "./TravelColumns";
 import { TravelEntry } from "@/db/db";
 import { FileDown, FileText, Copy, Check, ChevronDown, Bug, X } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -112,7 +112,7 @@ export function TravelTable() {
         </div>
       ),
     } as const;
-    return [selectionCol, ...useTravelColumns(dateFormat), actionCol];
+    return [selectionCol, ...buildTravelColumns(dateFormat), actionCol];
   }, [deleteEntry, duplicateEntry, dateFormat]);
 
   const selectedIds = useMemo(

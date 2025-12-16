@@ -33,7 +33,6 @@ function EditableCellComponent({
 }: EditableCellProps & { renderValue?: unknown; cell?: unknown }) {
   const initialValue = getValue();
   const [value, setValue] = React.useState(initialValue);
-  const [isEditing, setIsEditing] = React.useState(false);
   const textAreaRef = React.useRef<HTMLTextAreaElement | null>(null);
 
   // Sync internal state if external data changes
@@ -42,11 +41,12 @@ function EditableCellComponent({
   }, [initialValue]);
 
   const onBlur = () => {
-    setIsEditing(false);
     table.options.meta?.updateData(row.index, column.id, value);
   };
 
-  const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+  const onKeyDown = (
+    e: React.KeyboardEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     if (e.key === "Enter") {
         e.currentTarget.blur();
     }

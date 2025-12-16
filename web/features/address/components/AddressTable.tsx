@@ -3,7 +3,7 @@
 import { DataTable } from "@/components/shared/DataTable";
 import { useMemo, useState } from "react";
 import { useAddressData, bulkDeleteAddressEntries, bulkDuplicateAddressEntries, bulkUpdateAddressLocation } from "../hooks/useAddressData";
-import { useAddressColumns } from "./AddressColumns";
+import { buildAddressColumns } from "./AddressColumns";
 import { FileDown, FileText, Copy, Check, ChevronDown } from "lucide-react";
 import { exportAddressCSV, downloadCSV, copyAddressToClipboard } from "@/services/export/csvExporter";
 import {
@@ -99,7 +99,7 @@ export function AddressTable() {
         </div>
       ),
     } as const;
-    return [selectionCol, ...useAddressColumns(dateFormat), actionCol];
+    return [selectionCol, ...buildAddressColumns(dateFormat), actionCol];
   }, [deleteEntry, duplicateEntry, dateFormat]);
 
   const selectedIds = useMemo(

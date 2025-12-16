@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { db } from "@/db/db";
+import { db, type AddressEntry } from "@/db/db";
 import { generateTravelEntries } from "@/lib/generateDataset";
 import {
   bulkDeleteTravelEntries,
@@ -50,20 +50,22 @@ describe("Bulk operations", () => {
   });
 
   it("bulk delete address entries", async () => {
-    const addresses = [
-      { id: "a1", startDate: "2020-01-01", endDate: "2020-02-01", country: "A", city: "X", line1: "", createdAt: "now", updatedAt: "now" },
-      { id: "a2", startDate: "2020-03-01", endDate: "2020-04-01", country: "B", city: "Y", line1: "", createdAt: "now", updatedAt: "now" },
+    const now = new Date().toISOString();
+    const addresses: AddressEntry[] = [
+      { id: "a1", startDate: "2020-01-01", endDate: "2020-02-01", country: "A", city: "X", line1: "", createdAt: now, updatedAt: now },
+      { id: "a2", startDate: "2020-03-01", endDate: "2020-04-01", country: "B", city: "Y", line1: "", createdAt: now, updatedAt: now },
     ];
-    await db.address.bulkAdd(addresses as any);
+    await db.address.bulkAdd(addresses);
     await bulkDeleteAddressEntries(["a1"]);
     expect(await db.address.count()).toBe(1);
   });
 
   it("bulk duplicate and update address location", async () => {
-    const addresses = [
-      { id: "a1", startDate: "2020-01-01", endDate: "2020-02-01", country: "A", city: "X", line1: "", createdAt: "now", updatedAt: "now" },
+    const now = new Date().toISOString();
+    const addresses: AddressEntry[] = [
+      { id: "a1", startDate: "2020-01-01", endDate: "2020-02-01", country: "A", city: "X", line1: "", createdAt: now, updatedAt: now },
     ];
-    await db.address.bulkAdd(addresses as any);
+    await db.address.bulkAdd(addresses);
     await bulkDuplicateAddressEntries(["a1"]);
     await bulkUpdateAddressLocation(["a1"], "NewCity", "NewCountry");
     const updated = await db.address.get("a1");

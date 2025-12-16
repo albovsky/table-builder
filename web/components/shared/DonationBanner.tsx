@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Heart, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -8,20 +8,14 @@ const DISMISS_KEY = "table-builder-donation-dismissed";
 const FOUR_HOURS_MS = 4 * 60 * 60 * 1000;
 
 export function DonationBanner() {
-  const [isVisible, setIsVisible] = useState(false);
-
-  useEffect(() => {
+  const [isVisible, setIsVisible] = useState(() => {
+    if (typeof window === "undefined") return false;
     const dismissedAt = localStorage.getItem(DISMISS_KEY);
-    if (!dismissedAt) {
-      setIsVisible(true);
-      return;
-    }
-
-    const timeSinceDismissals = Date.now() - parseInt(dismissedAt, 10);
-    if (timeSinceDismissals > FOUR_HOURS_MS) {
-      setIsVisible(true);
-    }
-  }, []);
+    if (!dismissedAt) return true;
+    const elapsed = Date.now() - Number(dismissedAt);
+    if (Number.isNaN(elapsed)) return true;
+    return elapsed > FOUR_HOURS_MS;
+  });
 
   const handleDismiss = () => {
     setIsVisible(false);

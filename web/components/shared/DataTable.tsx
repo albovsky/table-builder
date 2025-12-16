@@ -1,25 +1,82 @@
 "use client";
+/** @noReactCompiler */
+"use client";
 
 import {
-  ColumnDef,
-  flexRender,
+  createTable,
   getCoreRowModel,
-  useReactTable,
+  type ColumnDef,
+  type OnChangeFn,
   type RowSelectionState,
-} from "@tanstack/react-table";
+  type TableOptionsResolved,
+  type Table,
+  type TableOptions,
+  type TableState,
+} from "@tanstack/table-core";
+import { flexRender } from "@tanstack/react-table";
+import React from "react";
 import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/store/useStore";
 
-interface DataTableProps<TData, TValue> {
+interface DataTableProps<TData extends { id?: string }, TValue> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
   onRowUpdate?: (rowIndex: number, columnId: string, value: unknown) => void;
   rowSelection?: RowSelectionState;
-  onRowSelectionChange?: (updater: RowSelectionState) => void;
+  onRowSelectionChange?: OnChangeFn<RowSelectionState>;
 }
 
-export function DataTable<TData, TValue>({
+function useTableInstance<TData extends { id?: string }>(
+  options: TableOptions<TData>
+): Table<TData> {
+  const resolvedOptions: TableOptionsResolved<TData> = {
+    state: {},
+    onStateChange: () => {},
+    renderFallbackValue: null,
+    ...options,
+    meta: {
+      updateData: (rowIndex, columnId, value) => {
+        options.meta?.updateData?.(rowIndex, columnId, value);
+      },
+    },
+  };
+
+  const [table] = React.useState(() => {
+    const t = createTable(resolvedOptions);
+    const seedState = { ...t.initialState, ...options.state };
+    t.setOptions((prev) => ({
+      ...prev,
+      state: seedState,
+      onStateChange: options.onStateChange ?? (() => {}),
+    }));
+    return t;
+  });
+
+  const [state, setState] = React.useState<TableState>(() => ({
+    ...table.initialState,
+    ...options.state,
+  }));
+
+  React.useEffect(() => {
+    table.setOptions((prev) => ({
+      ...prev,
+      ...options,
+      state: {
+        ...state,
+        ...options.state,
+      },
+      onStateChange: (updater) => {
+        setState(updater as TableState);
+        options.onStateChange?.(updater);
+      },
+    }));
+  }, [options, state, table]);
+
+  return table;
+}
+
+export function DataTable<TData extends { id?: string }, TValue>({
   columns,
   data,
   onRowUpdate,
@@ -27,14 +84,14 @@ export function DataTable<TData, TValue>({
   onRowSelectionChange,
 }: DataTableProps<TData, TValue>) {
   const { highlightedRows, errorHighlightIds, gapBorderId } = useStore();
-  const table = useReactTable({
+  const table = useTableInstance({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
     state: { rowSelection },
     enableRowSelection: true,
-    onRowSelectionChange: onRowSelectionChange as any,
-    getRowId: (row, idx) => (row as any).id ?? String(idx),
+    onRowSelectionChange,
+    getRowId: (row, idx) => row.id ?? String(idx),
     meta: {
       updateData: (rowIndex: number, columnId: string, value: unknown) => {
         onRowUpdate?.(rowIndex, columnId, value);

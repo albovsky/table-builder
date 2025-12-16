@@ -6,11 +6,7 @@ import { EditableCell } from "@/components/shared/EditableCell";
 import { DateCell } from "@/components/shared/DateCell";
 import { type DateFormat } from "@/lib/dateFormat";
 
-// Helper to cast EditableCell as a compatible cell renderer type
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const cellRenderer = (props: any) => <EditableCell {...props} />;
-
-export function useTravelColumns(dateFormat: DateFormat): ColumnDef<TravelEntry>[] {
+export function buildTravelColumns(dateFormat: DateFormat): ColumnDef<TravelEntry>[] {
   return [
     {
       accessorKey: "startDate",
