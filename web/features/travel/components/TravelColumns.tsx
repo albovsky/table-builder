@@ -11,19 +11,20 @@ export function buildTravelColumns(dateFormat: DateFormat): ColumnDef<TravelEntr
     {
       accessorKey: "startDate",
       header: "Start Date",
-      cell: (props) => <DateCell {...props} format={dateFormat} className="whitespace-nowrap min-w-[120px]" />,
-      size: 180,
+      cell: (props) => <DateCell {...props} format={dateFormat} className="whitespace-nowrap min-w-[110px]" />,
+      size: 150,
     },
     {
       accessorKey: "endDate",
       header: "End Date",
-      cell: (props) => <DateCell {...props} format={dateFormat} className="whitespace-nowrap min-w-[120px]" />,
-      size: 180,
+      cell: (props) => <DateCell {...props} format={dateFormat} className="whitespace-nowrap min-w-[110px]" />,
+      size: 150,
     },
     {
       id: "duration",
       header: "Days",
-      size: 120,
+      size: 90,
+      meta: { className: "px-2 text-center" },
       cell: ({ row }) => {
           const start = row.original.startDate;
           const end = row.original.endDate;
@@ -45,6 +46,7 @@ export function buildTravelColumns(dateFormat: DateFormat): ColumnDef<TravelEntr
           {...props}
           multiline
           className="whitespace-pre-wrap break-words text-wrap leading-5"
+          placeholder="City, Country"
         />
       ),
       size: 260,
@@ -52,7 +54,13 @@ export function buildTravelColumns(dateFormat: DateFormat): ColumnDef<TravelEntr
     {
       accessorKey: "purposeCode",
       header: "Purpose",
-      cell: (props) => <EditableCell {...props} className="whitespace-normal break-words" />,
+      cell: (props) => (
+        <EditableCell
+          {...props}
+          multiline
+          className="whitespace-pre-wrap break-words text-wrap leading-5"
+        />
+      ),
       size: 180,
     },
   ];

@@ -79,14 +79,14 @@ export function buildAddressColumns(dateFormat: DateFormat): ColumnDef<AddressEn
     {
       accessorKey: "startDate",
       header: "Start Date",
-      cell: (props) => <DateCell {...props} format={dateFormat} className="whitespace-nowrap min-w-[120px]" />,
-      size: 180,
+      cell: (props) => <DateCell {...props} format={dateFormat} className="whitespace-nowrap min-w-[110px]" />,
+      size: 150,
     },
     {
       accessorKey: "endDate",
       header: "End Date",
       cell: (props) => <EndDateCell {...props} dateFormat={dateFormat} />,
-      size: 180,
+      size: 150,
     },
     {
       accessorKey: "country",

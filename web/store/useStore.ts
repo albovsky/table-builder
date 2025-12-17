@@ -25,10 +25,10 @@ interface AppState {
   setPerfMode: (val: boolean) => void;
   highlightedRows: Record<string, boolean>;
   markHighlightedRows: (ids: string[]) => void;
-  errorHighlightIds: string[];
-  setErrorHighlightIds: (ids: string[]) => void;
-  gapBorderId: string | null;
-  setGapBorderId: (id: string | null) => void;
+  errorHighlight: { ids: string[]; severity: "error" | "warning" };
+  setErrorHighlight: (highlight: { ids: string[]; severity: "error" | "warning" }) => void;
+  gapBorder: { id: string; severity: "error" | "warning" } | null;
+  setGapBorder: (gap: { id: string; severity: "error" | "warning" } | null) => void;
   travelSelection: RowSelectionState;
   addressSelection: RowSelectionState;
   setTravelSelection: (sel: RowSelectionState) => void;
@@ -60,10 +60,10 @@ export const useStore = create<AppState>()(
       perfMode: false,
       setPerfMode: (val) => set({ perfMode: val }),
       highlightedRows: {},
-      errorHighlightIds: [],
-      setErrorHighlightIds: (ids) => set({ errorHighlightIds: ids }),
-      gapBorderId: null,
-      setGapBorderId: (id) => set({ gapBorderId: id }),
+      errorHighlight: { ids: [], severity: "error" },
+      setErrorHighlight: (highlight) => set({ errorHighlight: highlight }),
+      gapBorder: null,
+      setGapBorder: (gap) => set({ gapBorder: gap }),
       travelSelection: {},
       addressSelection: {},
       setTravelSelection: (sel) => set({ travelSelection: sel }),

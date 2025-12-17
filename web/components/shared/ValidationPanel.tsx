@@ -1,6 +1,16 @@
 "use client";
 
-import { Blend, Ban, CheckCircle2, AlertTriangle, BetweenHorizontalStart } from "lucide-react";
+import {
+  Blend,
+  Ban,
+  CheckCircle2,
+  AlertTriangle,
+  BetweenHorizontalStart,
+  Pencil,
+  NotebookText,
+  MessageSquareDashed,
+  ClockAlert,
+} from "lucide-react";
 import { useStore } from "@/store/useStore";
 import {
   Sheet,
@@ -13,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { formatDateDisplay } from "@/lib/dateFormat";
+import { cn } from "@/lib/utils";
 import { useMemo } from "react";
 
 import { db } from "@/db/db";
@@ -23,10 +34,12 @@ import { pushSnapshotFromDb } from "@/lib/historyManager";
 export function ValidationPanel() {
   const { validationErrors, isValidationOpen, setValidationOpen } = useStore();
   const dateFormat = useStore((s) => s.dateFormat);
-  const setErrorHighlightIds = useStore((s) => s.setErrorHighlightIds);
-  const setGapBorderId = useStore((s) => s.setGapBorderId);
+  const setErrorHighlight = useStore((s) => s.setErrorHighlight);
+  const setGapBorder = useStore((s) => s.setGapBorder);
   const errorCount = validationErrors.length;
-  const hasErrors = errorCount > 0;
+  const hasErrors = validationErrors.some((error) => error.severity === "error");
+  const hasWarnings = validationErrors.some((error) => error.severity === "warning");
+  const hasIssues = errorCount > 0;
   const formatMessage = useMemo(() => {
     const isoRegex = /\b\d{4}-\d{2}-\d{2}\b/g;
     return (msg: string) => msg.replace(isoRegex, (m) => formatDateDisplay(m, dateFormat));
@@ -35,19 +48,20 @@ export function ValidationPanel() {
   const handleFix = async (error: ValidationError) => {
     if (!error.fixAction) return;
 
-    const { type, payload } = error.fixAction;
+    const { type } = error.fixAction;
 
     if (type === "FILL_GAP") {
+        const { payload } = error.fixAction;
         await pushSnapshotFromDb();
         if (error.source === "travel") {
             await db.travel.add({
                 id: nanoid(),
                 startDate: payload.startDate,
                 endDate: payload.endDate,
-                destinationCountry: "Home",
+                destinationCountry: "",
                 destinationCity: "",
-                destination: "Home",
-                purposeCode: "Personal",
+                destination: "",
+                purposeCode: "",
                 createdAt: new Date().toISOString(),
                 updatedAt: new Date().toISOString()
             });
@@ -63,6 +77,13 @@ export function ValidationPanel() {
                 updatedAt: new Date().toISOString()
             });
         }
+    } else if (type === "DELETE_ROW") {
+        await pushSnapshotFromDb();
+        if (error.source === "travel") {
+            await db.travel.delete(error.id);
+        } else if (error.source === "address") {
+            await db.address.delete(error.id);
+        }
     }
   };
 
@@ -72,11 +93,20 @@ export function ValidationPanel() {
            <SheetTrigger asChild>
             <Button 
                 variant={hasErrors ? "destructive" : "outline"} 
-                className="rounded-full shadow-lg gap-2"
+                className={cn(
+                  "rounded-full shadow-lg gap-2",
+                  !hasErrors && hasWarnings
+                    ? "border-amber-200 text-amber-600 hover:bg-amber-50"
+                    : ""
+                )}
                 size="lg"
             >
-                {hasErrors ? <AlertTriangle className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4 text-green-500" />}
-                {hasErrors ? `${errorCount} Issues` : "No Issues"}
+                {hasIssues ? (
+                  <AlertTriangle className={cn("h-4 w-4", hasErrors ? "" : "text-amber-500")} />
+                ) : (
+                  <CheckCircle2 className="h-4 w-4 text-green-500" />
+                )}
+                {hasIssues ? `${errorCount} Issues` : "No Issues"}
             </Button>
             </SheetTrigger>
       </div>
@@ -102,24 +132,44 @@ export function ValidationPanel() {
                   className="flex gap-4 p-4 rounded-lg border bg-card text-card-foreground shadow-sm hover:bg-accent/50 transition-colors cursor-pointer group items-start"
                   onMouseEnter={() => {
                     if (error.type === "gap") {
-                      setGapBorderId(error.id);
-                      setErrorHighlightIds([]);
+                      setGapBorder({ id: error.id, severity: error.severity });
+                      setErrorHighlight({ ids: [], severity: "error" });
                     } else {
                       const ids = [error.id, error.relatedId].filter(Boolean) as string[];
-                      setErrorHighlightIds(ids);
-                      setGapBorderId(null);
+                      setErrorHighlight({ ids, severity: error.severity });
+                      setGapBorder(null);
                     }
                   }}
                   onMouseLeave={() => {
-                    setErrorHighlightIds([]);
-                    setGapBorderId(null);
+                    setErrorHighlight({ ids: [], severity: "error" });
+                    setGapBorder(null);
                   }}
                 >
                   <div className="mt-1">
                     {error.type === "overlap" ? (
-                      <Blend className="h-5 w-5 text-destructive" />
+                      <Blend
+                        className={cn(
+                          "h-5 w-5",
+                          error.severity === "warning" ? "text-amber-500" : "text-destructive"
+                        )}
+                      />
                     ) : error.type === "gap" ? (
-                      <BetweenHorizontalStart className="h-5 w-5 text-destructive" />
+                      <BetweenHorizontalStart
+                        className={cn(
+                          "h-5 w-5",
+                          error.severity === "warning" ? "text-amber-500" : "text-destructive"
+                        )}
+                      />
+                    ) : error.type === "too short" ? (
+                      <Pencil className="h-5 w-5 text-amber-500" />
+                    ) : error.type === "too long" ? (
+                      <NotebookText className="h-5 w-5 text-amber-500" />
+                    ) : error.type === "unfinished" ? (
+                      <MessageSquareDashed className="h-5 w-5 text-destructive" />
+                    ) : error.type === "long stay" ? (
+                      <ClockAlert className="h-5 w-5 text-amber-500" />
+                    ) : error.severity === "warning" ? (
+                      <AlertTriangle className="h-5 w-5 text-amber-500" />
                     ) : (
                       <Ban className="h-5 w-5 text-destructive" />
                     )}

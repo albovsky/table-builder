@@ -19,8 +19,8 @@ import { useWindowVirtualizer } from "@tanstack/react-virtual";
 import { cn } from "@/lib/utils";
 import { useStore } from "@/store/useStore";
 
-interface DataTableProps<TData extends { id?: string }, TValue> {
-  columns: ColumnDef<TData, TValue>[];
+interface DataTableProps<TData extends { id?: string }> {
+  columns: ColumnDef<TData, unknown>[];
   data: TData[];
   onRowUpdate?: (rowIndex: number, columnId: string, value: unknown) => void;
   rowSelection?: RowSelectionState;
@@ -76,17 +76,38 @@ function useTableInstance<TData extends { id?: string }>(
   return table;
 }
 
-export function DataTable<TData extends { id?: string }, TValue>({
+export function DataTable<TData extends { id?: string }>({
   columns,
   data,
   onRowUpdate,
   rowSelection,
   onRowSelectionChange,
-}: DataTableProps<TData, TValue>) {
-  const { highlightedRows, errorHighlightIds, gapBorderId } = useStore();
+}: DataTableProps<TData>) {
+  const { highlightedRows, errorHighlight, gapBorder } = useStore();
+  const rowNumberColumn = React.useMemo<ColumnDef<TData>>(
+    () => ({
+      id: "__rowNumber",
+      header: "#",
+      size: 44,
+      enableHiding: false,
+      enableSorting: false,
+      cell: ({ row }) => row.index + 1,
+      meta: { className: "text-center text-muted-foreground px-2 w-[44px]" },
+    }),
+    []
+  );
+
+  const columnsWithNumbers = React.useMemo(() => {
+    if (!columns || columns.length === 0) return [rowNumberColumn];
+    if (columns[0]?.id === "select") {
+      return [columns[0], rowNumberColumn, ...columns.slice(1)];
+    }
+    return [rowNumberColumn, ...columns];
+  }, [columns, rowNumberColumn]);
+
   const table = useTableInstance({
     data,
-    columns,
+    columns: columnsWithNumbers,
     getCoreRowModel: getCoreRowModel(),
     state: { rowSelection },
     enableRowSelection: true,
@@ -122,7 +143,10 @@ export function DataTable<TData extends { id?: string }, TValue>({
               {headerGroup.headers.map((header) => (
                 <th
                   key={header.id}
-                  className="ui-table-header ui-table-cell font-semibold select-none border-b border-border/50 text-left"
+                  className={cn(
+                    "ui-table-header ui-table-cell font-semibold select-none border-b border-border/50 text-left",
+                    (header.column.columnDef.meta as { className?: string } | undefined)?.className
+                  )}
                   style={header.getSize() ? { width: header.getSize() } : undefined}
                 >
                   {header.isPlaceholder
@@ -141,7 +165,31 @@ export function DataTable<TData extends { id?: string }, TValue>({
           {virtualRows.map((virtualRow) => {
             const row = rows[virtualRow.index];
             const rowId = (row.original as { id?: string }).id ?? "";
-            const isGapBorder = gapBorderId === rowId;
+            const isGapBorder = gapBorder?.id === rowId;
+            const isWarningHighlight =
+              errorHighlight.severity === "warning" && errorHighlight.ids.includes(rowId);
+            const isErrorHighlight =
+              errorHighlight.severity === "error" && errorHighlight.ids.includes(rowId);
+            const gapBorderStyle =
+              isGapBorder && gapBorder?.severity === "warning"
+                ? {
+                    backgroundImage:
+                      "linear-gradient(to right, transparent, rgba(245,158,11,0.45) 8%, rgba(245,158,11,0.7) 50%, rgba(245,158,11,0.45) 92%, transparent)",
+                    backgroundRepeat: "no-repeat",
+                    backgroundSize: "100% 2px",
+                    backgroundPosition: "0 calc(100% - 0.5px)",
+                    boxShadow: "0 0 10px rgba(245,158,11,0.22)",
+                  }
+                : isGapBorder
+                  ? {
+                      backgroundImage:
+                        "linear-gradient(to right, transparent, rgba(239,68,68,0.45) 8%, rgba(239,68,68,0.7) 50%, rgba(239,68,68,0.45) 92%, transparent)",
+                      backgroundRepeat: "no-repeat",
+                      backgroundSize: "100% 2px",
+                      backgroundPosition: "0 calc(100% - 0.5px)",
+                      boxShadow: "0 0 10px rgba(239,68,68,0.22)",
+                    }
+                  : {};
             return (
               <tr
                 key={row.id}
@@ -151,22 +199,12 @@ export function DataTable<TData extends { id?: string }, TValue>({
                 className={cn(
                   "ui-table-row border-b border-border/40 transition-colors hover:bg-muted/30 data-[state=selected]:bg-muted",
                   highlightedRows[rowId] ? "row-highlight" : "",
-                  errorHighlightIds.includes(rowId)
-                    ? "bg-destructive/10"
-                    : "",
+                  isErrorHighlight ? "bg-destructive/10" : "",
+                  isWarningHighlight ? "bg-amber-100/70 dark:bg-amber-900/20" : "",
                   isGapBorder ? "relative overflow-hidden border-b border-transparent" : ""
                 )}
                 style={{
-                  ...(isGapBorder
-                    ? {
-                        backgroundImage:
-                          "linear-gradient(to right, transparent, rgba(239,68,68,0.45) 8%, rgba(239,68,68,0.7) 50%, rgba(239,68,68,0.45) 92%, transparent)",
-                        backgroundRepeat: "no-repeat",
-                        backgroundSize: "100% 2px",
-                        backgroundPosition: "0 calc(100% - 0.5px)",
-                        boxShadow: "0 0 10px rgba(239,68,68,0.22)",
-                      }
-                    : {}),
+                  ...gapBorderStyle,
                 }}
               >
                 {row.getVisibleCells().map((cell) => (

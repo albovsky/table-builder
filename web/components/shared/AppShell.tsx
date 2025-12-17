@@ -5,6 +5,7 @@ import { DonationBanner } from "@/components/shared/DonationBanner";
 import { PrivacyDisclaimer } from "@/components/shared/PrivacyDisclaimer";
 import { useStore } from "@/store/useStore";
 import { SettingsMenu } from "@/components/shared/SettingsMenu";
+import { ExportMenu } from "@/components/shared/ExportMenu";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -38,6 +39,7 @@ export function AppShell({ children }: AppShellProps) {
           
           <div className="flex flex-1 items-center justify-end space-x-2">
             <nav className="flex items-center space-x-2">
+               <ExportMenu />
                <SettingsMenu />
             </nav>
           </div>

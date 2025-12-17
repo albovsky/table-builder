@@ -109,7 +109,7 @@
   /* Table */
   --table-row-height: 48px;
   --table-header-height: 52px;
-  --table-cell-padding-x: 16px;
+  --table-cell-padding-x: 12px;
 }
 
 .dark {
@@ -163,7 +163,7 @@
   --icon-size-lg: 20px;
   --table-row-height: 44px;
   --table-header-height: 48px;
-  --table-cell-padding-x: 14px;
+  --table-cell-padding-x: 10px;
 }
 
 :root[data-density="comfortable"] {
